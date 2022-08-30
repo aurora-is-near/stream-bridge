@@ -1,0 +1,40 @@
+{
+  "Mode": "aurora",
+  "InputNats": {
+    "Endpoints": [
+      "tls://input.dev:4222"
+    ],
+    "Creds": "nats.creds",
+    "TimeoutMs": 10000,
+    "PingIntervalMs": 600000,
+    "MaxPingsOutstanding": 5,
+    "LogTag": "input"
+  },
+  "OutputNats": {
+    "Endpoints": [
+      "tls://output.dev:4222"
+    ],
+    "Creds": "nats.creds",
+    "TimeoutMs": 10000,
+    "PingIntervalMs": 600000,
+    "MaxPingsOutstanding": 5,
+    "LogTag": "output"
+  },
+  "InputStream": "myblocks",
+  "InputSubject": "myblocks",
+  "OutputStream": "myblocks",
+  "OutputSubject": "myblocks",
+  "Metrics": {
+    "Server": {
+      "ListenAddress": "localhost:9991",
+      "Namespace": "infra",
+      "Subsystem": "stream_bridge"
+    },
+    "Labels": {
+      "inputcluster": "X",
+      "outputcluster": "Y",
+      "stream": "myblocks",
+      "whatever": "whatever"
+    }
+  }
+}
