@@ -7,9 +7,5 @@ type AuroraBlock struct {
 }
 
 func DecodeAuroraBlock(data []byte) (*AuroraBlock, error) {
-	event, err := DecodeBorealisEvent[AuroraBlock](data)
-	if err != nil {
-		return nil, err
-	}
-	return event.PayloadPtr, nil
+	return DecodeBorealisPayload[AuroraBlock](data)
 }
