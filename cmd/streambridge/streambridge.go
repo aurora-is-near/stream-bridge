@@ -56,6 +56,7 @@ var config = &streambridge.StreamBridge{
 		FetchTimeoutMs:               10000,
 		SortBatch:                    true,
 		LastSeqUpdateIntervalSeconds: 5,
+		Durable:                      "myconsumer",
 	},
 	InputStartSequence:       0,
 	InputEndSequenece:        0,

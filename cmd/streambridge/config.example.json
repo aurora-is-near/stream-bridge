@@ -40,7 +40,8 @@
     "InactiveThresholdSeconds": 300,
     "FetchTimeoutMs": 10000,
     "SortBatch": true,
-    "LastSeqUpdateIntervalSeconds": 5
+    "LastSeqUpdateIntervalSeconds": 5,
+    "Durable": "myconsumer"
   },
   "InputStartSequence": 0,
   "InputEndSequenece": 0,

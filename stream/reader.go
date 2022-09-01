@@ -19,6 +19,7 @@ type ReaderOpts struct {
 	FetchTimeoutMs               uint
 	SortBatch                    bool
 	LastSeqUpdateIntervalSeconds uint
+	Durable                      string
 }
 
 type ReaderOutput struct {
@@ -81,7 +82,7 @@ func StartReader(opts *ReaderOpts, stream *Stream, startSeq uint64, endSeq uint6
 	var err error
 	r.sub, err = stream.js.PullSubscribe(
 		stream.Subject,
-		"",
+		opts.Durable,
 		nats.BindStream(stream.Stream),
 		//nats.OrderedConsumer(),
 		nats.StartSequence(startSeq),
