@@ -7,6 +7,7 @@ import (
 	"os"
 
 	_metrics "github.com/aurora-is-near/stream-bridge/metrics"
+	"github.com/aurora-is-near/stream-bridge/stream"
 	"github.com/aurora-is-near/stream-bridge/streambridge"
 	"github.com/aurora-is-near/stream-bridge/streambridge/metrics"
 	"github.com/aurora-is-near/stream-bridge/transport"
@@ -14,30 +15,55 @@ import (
 
 var config = &streambridge.StreamBridge{
 	Mode: "aurora",
-	InputNats: &transport.NatsConnectionConfig{
-		Endpoints: []string{
-			"tls://input.dev:4222",
+	Input: &stream.Stream{
+		Nats: &transport.NatsConnectionConfig{
+			Endpoints: []string{
+				"tls://input.dev:4222",
+			},
+			Creds:               "nats.creds",
+			TimeoutMs:           10000,
+			PingIntervalMs:      600000,
+			MaxPingsOutstanding: 5,
+			LogTag:              "input",
 		},
-		Creds:               "nats.creds",
-		TimeoutMs:           10000,
-		PingIntervalMs:      600000,
-		MaxPingsOutstanding: 5,
-		LogTag:              "input",
+		Stream:           "myblocks",
+		Subject:          "myblocks",
+		RequestWaitMs:    5000,
+		PublishAckWaitMs: 5000,
 	},
-	OutputNats: &transport.NatsConnectionConfig{
-		Endpoints: []string{
-			"tls://output.dev:4222",
+	Output: &stream.Stream{
+		Nats: &transport.NatsConnectionConfig{
+			Endpoints: []string{
+				"tls://output.dev:4222",
+			},
+			Creds:               "nats.creds",
+			TimeoutMs:           10000,
+			PingIntervalMs:      600000,
+			MaxPingsOutstanding: 5,
+			LogTag:              "output",
 		},
-		Creds:               "nats.creds",
-		TimeoutMs:           10000,
-		PingIntervalMs:      600000,
-		MaxPingsOutstanding: 5,
-		LogTag:              "output",
+		Stream:           "myblocks",
+		Subject:          "myblocks",
+		RequestWaitMs:    5000,
+		PublishAckWaitMs: 5000,
 	},
-	InputStream:   "myblocks",
-	InputSubject:  "myblocks",
-	OutputStream:  "myblocks",
-	OutputSubject: "myblocks",
+	Reader: &stream.ReaderOpts{
+		MaxRps:                       1,
+		BufferSize:                   1000,
+		MaxRequestBatchSize:          100,
+		SubscribeAckWaitMs:           5000,
+		InactiveThresholdSeconds:     300,
+		FetchTimeoutMs:               10000,
+		SortBatch:                    true,
+		LastSeqUpdateIntervalSeconds: 5,
+	},
+	InputStartSequence:       0,
+	InputEndSequenece:        0,
+	RestartDelayMs:           2000,
+	ForceRestartAfterSeconds: 3600,
+	ToleranceWindow:          1000,
+	MaxPushAttempts:          3,
+	PushRetryWaitMs:          1000,
 	Metrics: &metrics.Metrics{
 		Server: _metrics.Server{
 			ListenAddress: "localhost:9991",

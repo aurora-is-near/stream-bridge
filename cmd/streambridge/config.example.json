@@ -1,29 +1,54 @@
 {
   "Mode": "aurora",
-  "InputNats": {
-    "Endpoints": [
-      "tls://input.dev:4222"
-    ],
-    "Creds": "nats.creds",
-    "TimeoutMs": 10000,
-    "PingIntervalMs": 600000,
-    "MaxPingsOutstanding": 5,
-    "LogTag": "input"
+  "Input": {
+    "Nats": {
+      "Endpoints": [
+        "tls://input.dev:4222"
+      ],
+      "Creds": "nats.creds",
+      "TimeoutMs": 10000,
+      "PingIntervalMs": 600000,
+      "MaxPingsOutstanding": 5,
+      "LogTag": "input"
+    },
+    "Stream": "myblocks",
+    "Subject": "myblocks",
+    "RequestWaitMs": 5000,
+    "PublishAckWaitMs": 5000
   },
-  "OutputNats": {
-    "Endpoints": [
-      "tls://output.dev:4222"
-    ],
-    "Creds": "nats.creds",
-    "TimeoutMs": 10000,
-    "PingIntervalMs": 600000,
-    "MaxPingsOutstanding": 5,
-    "LogTag": "output"
+  "Output": {
+    "Nats": {
+      "Endpoints": [
+        "tls://output.dev:4222"
+      ],
+      "Creds": "nats.creds",
+      "TimeoutMs": 10000,
+      "PingIntervalMs": 600000,
+      "MaxPingsOutstanding": 5,
+      "LogTag": "output"
+    },
+    "Stream": "myblocks",
+    "Subject": "myblocks",
+    "RequestWaitMs": 5000,
+    "PublishAckWaitMs": 5000
   },
-  "InputStream": "myblocks",
-  "InputSubject": "myblocks",
-  "OutputStream": "myblocks",
-  "OutputSubject": "myblocks",
+  "Reader": {
+    "MaxRps": 1,
+    "BufferSize": 1000,
+    "MaxRequestBatchSize": 100,
+    "SubscribeAckWaitMs": 5000,
+    "InactiveThresholdSeconds": 300,
+    "FetchTimeoutMs": 10000,
+    "SortBatch": true,
+    "LastSeqUpdateIntervalSeconds": 5
+  },
+  "InputStartSequence": 0,
+  "InputEndSequenece": 0,
+  "RestartDelayMs": 2000,
+  "ForceRestartAfterSeconds": 3600,
+  "ToleranceWindow": 1000,
+  "MaxPushAttempts": 3,
+  "PushRetryWaitMs": 1000,
   "Metrics": {
     "Server": {
       "ListenAddress": "localhost:9991",
