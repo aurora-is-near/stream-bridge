@@ -9,13 +9,15 @@ type Metrics struct {
 	Server _metrics.Server
 	Labels map[string]string
 
-	InputStreamConnected       prometheus.Gauge   `json:",omitempty"`
-	InputStreamSequenceNumber  prometheus.Gauge   `json:",omitempty"`
-	InputStreamBlockHeight     prometheus.Gauge   `json:",omitempty"`
-	OutputStreamConnected      prometheus.Gauge   `json:",omitempty"`
-	OutputStreamSequenceNumber prometheus.Gauge   `json:",omitempty"`
-	OutputStreamBlockHeight    prometheus.Gauge   `json:",omitempty"`
-	SkipsCount                 prometheus.Counter `json:",omitempty"`
+	InputStreamConnected       prometheus.Gauge   `json:"-"`
+	InputStreamSequenceNumber  prometheus.Gauge   `json:"-"`
+	InputStreamBlockHeight     prometheus.Gauge   `json:"-"`
+	OutputStreamConnected      prometheus.Gauge   `json:"-"`
+	OutputStreamSequenceNumber prometheus.Gauge   `json:"-"`
+	OutputStreamBlockHeight    prometheus.Gauge   `json:"-"`
+	CatchUpSkips               prometheus.Counter `json:"-"`
+	CorruptedSkips             prometheus.Counter `json:"-"`
+	HashMismatchSkips          prometheus.Counter `json:"-"`
 }
 
 func (m *Metrics) Start() error {
@@ -62,9 +64,21 @@ func (m *Metrics) Start() error {
 		labelNames,
 	).WithLabelValues(labelValues...)
 
-	m.SkipsCount = m.Server.AddCounter(
-		"skips_count",
-		"Skips count on the output stream",
+	m.CatchUpSkips = m.Server.AddCounter(
+		"catch_up_skips",
+		"Input stream catch up skips count",
+		labelNames,
+	).WithLabelValues(labelValues...)
+
+	m.CorruptedSkips = m.Server.AddCounter(
+		"corrupted_skips",
+		"Input stream corrupted blocks skips count",
+		labelNames,
+	).WithLabelValues(labelValues...)
+
+	m.HashMismatchSkips = m.Server.AddCounter(
+		"hash_mismatch_skips",
+		"Input stream hash mismatch skips count",
 		labelNames,
 	).WithLabelValues(labelValues...)
 
