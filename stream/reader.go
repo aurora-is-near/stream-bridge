@@ -179,7 +179,7 @@ func (r *Reader) run() {
 				}
 
 				for _, res := range result {
-					if r.endSeq > 0 && res.Metadata.Sequence.Stream > r.endSeq {
+					if r.endSeq > 0 && res.Metadata.Sequence.Stream >= r.endSeq {
 						r.finish("finished", nil)
 						return
 					}
@@ -199,7 +199,7 @@ func (r *Reader) run() {
 					case r.output <- res:
 					}
 
-					if r.endSeq > 0 && res.Metadata.Sequence.Stream == r.endSeq {
+					if r.endSeq > 0 && res.Metadata.Sequence.Stream == r.endSeq-1 {
 						r.finish("finished", nil)
 						return
 					}
@@ -214,8 +214,8 @@ func (r *Reader) run() {
 
 func (r *Reader) countBatchSize(curSeq uint64, lastSeq uint64) uint {
 	border := lastSeq
-	if r.endSeq != 0 && r.endSeq < border {
-		border = r.endSeq
+	if r.endSeq != 0 && r.endSeq-1 < border {
+		border = r.endSeq - 1
 	}
 	residue := border - curSeq
 

@@ -64,8 +64,11 @@ func (sb *StreamBridge) Run() error {
 		return err
 	}
 
-	if sb.InputEndSequenece > 0 && sb.InputStartSequence > sb.InputEndSequenece {
-		return fmt.Errorf("it doesn't make sense to have InputStartSequence > InputEndSequence")
+	if sb.InputEndSequenece > 0 && sb.InputStartSequence >= sb.InputEndSequenece {
+		return fmt.Errorf("it doesn't make sense to have InputStartSequence >= InputEndSequence")
+	}
+	if sb.InputEndSequenece == 1 {
+		return fmt.Errorf("InputEndSequence can't be equal to 1")
 	}
 
 	if sb.MaxPushAttempts == 0 {
@@ -212,10 +215,10 @@ func (sb *StreamBridge) run() (bool, error) {
 		lowerBound = sb.InputStartSequence
 	}
 	if sb.InputEndSequenece > 0 {
-		if sb.InputEndSequenece > inputInfo.State.LastSeq {
-			log.Printf("Warning: InputEndSequenece > inputInfo.State.LastSeq")
+		if sb.InputEndSequenece > inputInfo.State.LastSeq+1 {
+			log.Printf("Warning: InputEndSequenece > inputInfo.State.LastSeq + 1")
 		}
-		startSeq = Min(startSeq, sb.InputEndSequenece)
+		startSeq = Min(startSeq, sb.InputEndSequenece-1)
 	}
 	startSeq = Min(startSeq, Max(inputInfo.State.LastSeq, 1))
 	lowerBound = Min(lowerBound, Max(inputInfo.State.LastSeq, 1))
