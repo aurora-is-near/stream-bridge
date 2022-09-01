@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/buger/jsonparser"
+	"github.com/fxamacker/cbor/v2"
 	"github.com/pierrec/lz4/v4"
 )
 
@@ -22,13 +23,43 @@ var nearBlockSchema = [][]string{
 	{"block", "header", "height"},
 }
 
-func DecodeNearBlockJson(data []byte) ([]byte, error) {
-	event, err := DecodeBorealisEvent[[]byte](data)
+var nearBlockCborDecMode cbor.DecMode
+
+func getNearBlockCborDecMode() (cbor.DecMode, error) {
+	if nearBlockCborDecMode != nil {
+		return nearBlockCborDecMode, nil
+	}
+
+	var err error
+	nearBlockCborDecMode, err = cbor.DecOptions{
+		MaxArrayElements: 2147483647,
+	}.DecMode()
 	if err != nil {
 		return nil, err
 	}
+
+	return nearBlockCborDecMode, nil
+}
+
+func DecodeNearBlockJson(data []byte) ([]byte, error) {
+	event, err := DecodeBorealisEvent[cbor.RawMessage](data)
+	if err != nil {
+		return nil, err
+	}
+
+	decMode, err := getNearBlockCborDecMode()
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := decMode.NewDecoder(bytes.NewReader(*event.PayloadPtr))
+	payloadArr := []byte{}
+	if err := decoder.Decode(&payloadArr); err != nil {
+		return nil, err
+	}
+
 	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, lz4.NewReader(bytes.NewReader(*event.PayloadPtr))); err != nil {
+	if _, err := io.Copy(&buf, lz4.NewReader(bytes.NewReader(payloadArr))); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
