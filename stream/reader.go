@@ -83,7 +83,7 @@ func StartReader(opts *ReaderOpts, stream *Stream, startSeq uint64, endSeq uint6
 		stream.Subject,
 		"",
 		nats.BindStream(stream.Stream),
-		nats.OrderedConsumer(),
+		//nats.OrderedConsumer(),
 		nats.StartSequence(startSeq),
 		nats.InactiveThreshold(time.Second*time.Duration(opts.InactiveThresholdSeconds)),
 	)
