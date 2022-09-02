@@ -162,6 +162,9 @@ func (r *Reader) run() {
 
 				result := make([]*ReaderOutput, 0, len(messages))
 				for _, msg := range messages {
+					if err := msg.Ack(); err != nil {
+						log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.Nats.LogTag, err)
+					}
 					meta, err := msg.Metadata()
 					if err != nil {
 						r.finish("unable to parse message metadata", err)
