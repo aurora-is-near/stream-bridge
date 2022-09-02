@@ -124,7 +124,7 @@ func (sb *StreamBridge) loop() {
 
 		if !first {
 			log.Printf("Waiting for %vms before next start...", sb.RestartDelayMs)
-			timer := time.NewTimer(time.Second * time.Duration(sb.RestartDelayMs))
+			timer := time.NewTimer(time.Millisecond * time.Duration(sb.RestartDelayMs))
 			select {
 			case <-sb.stop:
 				timer.Stop()
