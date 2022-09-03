@@ -13,6 +13,7 @@ import (
 	"github.com/aurora-is-near/stream-bridge/stream"
 	"github.com/aurora-is-near/stream-bridge/streambridge/metrics"
 	"github.com/aurora-is-near/stream-bridge/types"
+	"github.com/nats-io/nats.go"
 )
 
 type StreamBridge struct {
@@ -204,50 +205,7 @@ func (sb *StreamBridge) run() (bool, error) {
 		return true, nil
 	}
 
-	log.Printf("Figuring out the best input seq to start from...")
-	startSeq := outputInfo.State.LastSeq + 1
-	lowerBound := uint64(1)
-	if sb.InputStartSequence > 0 {
-		if sb.InputStartSequence > inputInfo.State.LastSeq {
-			log.Printf("Warning: InputStartSequence > inputInfo.State.LastSeq")
-		}
-		startSeq = Max(startSeq, sb.InputStartSequence)
-		lowerBound = sb.InputStartSequence
-	}
-	if sb.InputEndSequenece > 0 {
-		if sb.InputEndSequenece > inputInfo.State.LastSeq+1 {
-			log.Printf("Warning: InputEndSequenece > inputInfo.State.LastSeq + 1")
-		}
-		startSeq = Min(startSeq, sb.InputEndSequenece-1)
-	}
-	startSeq = Min(startSeq, Max(inputInfo.State.LastSeq, 1))
-	lowerBound = Min(lowerBound, Max(inputInfo.State.LastSeq, 1))
-
-	for lastPushedBlock != nil && startSeq > lowerBound {
-		if sb.checkStop() {
-			return true, nil
-		}
-
-		log.Printf("Checking that input block with seq=%d is not higher than needed", startSeq)
-		msg, err := sb.Input.Get(startSeq)
-		if err != nil {
-			log.Printf("Unable to get input block (seq=%d), will fall back to lower bound: %v", startSeq, err)
-			startSeq = lowerBound
-			break
-		}
-		block, err := sb.blockParseFn(msg.Data)
-		if err != nil {
-			log.Printf("Unable to parse input block (seq=%d), will fall back to lower bound: %v", startSeq, err)
-			startSeq = lowerBound
-			break
-		}
-		if block.Height <= lastPushedBlock.Height+1 {
-			break
-		}
-		jump := Min(block.Height-(lastPushedBlock.Height+1), startSeq-lowerBound)
-		log.Printf("This block is too high, will jump %d blocks down", jump)
-		startSeq -= jump
-	}
+	startSeq := sb.calculateStartSeq(inputInfo, lastPushedBlock)
 
 	if sb.checkStop() {
 		return true, nil
@@ -388,4 +346,107 @@ func (sb *StreamBridge) checkStop() bool {
 	default:
 	}
 	return false
+}
+
+func (sb *StreamBridge) calculateStartSeq(inputInfo *nats.StreamInfo, lastPushedBlock *types.AbstractBlock) uint64 {
+	log.Printf("Figuring out the best input seq to start from...")
+
+	if inputInfo.State.LastSeq == 0 {
+		return 1
+	}
+
+	lowerBound := inputInfo.State.FirstSeq
+	if sb.InputStartSequence > 0 {
+		lowerBound = sb.InputStartSequence
+		if sb.InputStartSequence < inputInfo.State.FirstSeq {
+			log.Printf(
+				"Warning: InputStartSequence (%d) < inputInfo.State.FirstSeq (%d)",
+				sb.InputStartSequence,
+				inputInfo.State.FirstSeq,
+			)
+			lowerBound = inputInfo.State.FirstSeq
+		}
+		if sb.InputStartSequence > inputInfo.State.LastSeq {
+			log.Printf(
+				"Warning: InputStartSequence (%d) > inputInfo.State.LastSeq (%d)",
+				sb.InputStartSequence,
+				inputInfo.State.LastSeq,
+			)
+			lowerBound = inputInfo.State.LastSeq
+		}
+	}
+
+	upperBound := inputInfo.State.LastSeq
+	if sb.InputEndSequenece > 0 {
+		upperBound = sb.InputEndSequenece - 1
+		if sb.InputEndSequenece-1 < inputInfo.State.FirstSeq {
+			log.Printf(
+				"Warning: InputEndSequenece-1 (%d) < inputInfo.State.FirstSeq (%d)",
+				sb.InputEndSequenece-1,
+				inputInfo.State.FirstSeq,
+			)
+			upperBound = inputInfo.State.FirstSeq
+		}
+		if sb.InputEndSequenece-1 > inputInfo.State.LastSeq {
+			log.Printf(
+				"Warning: InputEndSequenece-1 (%d) > inputInfo.State.LastSeq (%d)",
+				sb.InputEndSequenece-1,
+				inputInfo.State.LastSeq,
+			)
+			upperBound = inputInfo.State.LastSeq
+		}
+	}
+
+	log.Printf("lowerBound=%d, upperBound=%d", lowerBound, upperBound)
+
+	if lastPushedBlock == nil {
+		return lowerBound
+	}
+
+	log.Printf("Checking the height of the lowerBound block (seq=%d)", lowerBound)
+	msg, err := sb.Input.Get(lowerBound)
+	if err != nil {
+		log.Printf("Unable to get input block (seq=%d), will fall back to lower bound: %v", lowerBound, err)
+		return lowerBound
+	}
+	block, err := sb.blockParseFn(msg.Data)
+	if err != nil {
+		log.Printf("Unable to parse input block (seq=%d), will fall back to lower bound: %v", lowerBound, err)
+		return lowerBound
+	}
+
+	if block.Height > lastPushedBlock.Height {
+		return lowerBound
+	}
+
+	startSeq := Min(lowerBound+(lastPushedBlock.Height+1-block.Height), upperBound)
+
+	for startSeq > lowerBound {
+		if sb.checkStop() {
+			return lowerBound
+		}
+
+		log.Printf("Checking the height of the input block (seq=%d)", startSeq)
+		msg, err = sb.Input.Get(startSeq)
+		if err != nil {
+			log.Printf("Unable to get input block (seq=%d), will fall back to lower bound: %v", startSeq, err)
+			return lowerBound
+		}
+		block, err = sb.blockParseFn(msg.Data)
+		if err != nil {
+			log.Printf("Unable to parse input block (seq=%d), will fall back to lower bound: %v", startSeq, err)
+			return lowerBound
+		}
+
+		if block.Height <= lastPushedBlock.Height+1 {
+			return startSeq
+		}
+
+		maxJump := startSeq - lowerBound
+		jump := Min(block.Height-(lastPushedBlock.Height+1), maxJump)
+		log.Printf("Block (seq=%d) height is too high, will jump %d seqs down", startSeq, jump)
+		startSeq -= jump
+	}
+
+	return startSeq
 }
