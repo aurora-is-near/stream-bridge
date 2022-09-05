@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 type Stream struct {
 	Nats             *transport.NatsConnectionConfig
 	Stream           string
-	Subject          string
+	Subject          string `json:",omitempty"`
 	RequestWaitMs    uint
 	PublishAckWaitMs uint
 
@@ -33,41 +34,62 @@ func (s *Stream) Connect() (*nats.StreamInfo, error) {
 	s.publishAckWait = nats.AckWait(time.Millisecond * time.Duration(s.PublishAckWaitMs))
 
 	if s.nc != nil {
-		log.Printf("Stream [%v]: reconnecting...", s.Nats.LogTag)
-		s.nc.Drain()
-		s.nc, s.js = nil, nil
+		s.log("reconnecting...")
+		s.Disconnect()
 	} else {
-		log.Printf("Stream [%v]: connecting...", s.Nats.LogTag)
+		s.log("connecting...")
 	}
 
-	log.Printf("Stream [%v]: connecting to NATS...", s.Nats.LogTag)
+	s.log("connecting to NATS...")
 	var err error
 	s.nc, err = transport.ConnectNATS(s.Nats, nil)
 	if err != nil {
-		log.Printf("Stream [%v]: unable to connect to NATS: %v", s.Nats.LogTag, err)
-		s.nc, s.js = nil, nil
+		s.log("unable to connect to NATS: %v", err)
+		s.Disconnect()
 		return nil, err
 	}
 
-	log.Printf("Stream [%v]: connecting to NATS JetStream...", s.Nats.LogTag)
+	s.log("connecting to NATS JetStream...")
 	s.js, err = s.nc.Conn().JetStream(s.requestWait)
 	if err != nil {
-		log.Printf("Stream [%v]: unable to connect to NATS JetStream: %v", s.Nats.LogTag, err)
-		s.nc.Drain()
-		s.nc, s.js = nil, nil
+		s.log("unable to connect to NATS JetStream: %v", err)
+		s.Disconnect()
 		return nil, err
 	}
 
-	log.Printf("Stream [%v]: getting stream info...", s.Nats.LogTag)
+	s.log("getting stream info...")
 	info, err := s.GetStreamInfo()
 	if err != nil {
-		log.Printf("Stream [%v]: unable to get stream info: %v", s.Nats.LogTag, err)
-		s.nc.Drain()
-		s.nc, s.js = nil, nil
+		s.log("unable to get stream info: %v", err)
+		s.Disconnect()
 		return nil, err
 	}
 
-	log.Printf("Stream [%v]: connected", s.Nats.LogTag)
+	if len(s.Subject) == 0 {
+		s.log("subject is not specified, figuring it out automatically...")
+		curInfo := info
+		for curInfo.Config.Mirror != nil {
+			mirrorName := curInfo.Config.Mirror.Name
+			s.log("stream '%s' is mirrored from stream '%s', getting it's info...", curInfo.Config.Name, mirrorName)
+			curInfo, err = s.js.StreamInfo(mirrorName, s.requestWait)
+			if err != nil {
+				s.log("unable to get stream '%s' info: %v", mirrorName, err)
+				s.Disconnect()
+				return nil, err
+			}
+		}
+
+		if len(curInfo.Config.Subjects) == 0 {
+			err := fmt.Errorf("stream '%s' has no subjects", curInfo.Config.Name)
+			s.log(err.Error())
+			s.Disconnect()
+			return nil, err
+		}
+
+		s.Subject = curInfo.Config.Subjects[0]
+	}
+
+	s.log("connected")
 
 	return info, err
 }
@@ -76,7 +98,7 @@ func (s *Stream) Disconnect() error {
 	if s.nc == nil {
 		return nil
 	}
-	log.Printf("Stream [%v]: disconnecting...", s.Nats.LogTag)
+	s.log("disconnecting...")
 	err := s.nc.Drain()
 	s.nc, s.js = nil, nil
 	return err
@@ -100,4 +122,8 @@ func (s *Stream) Write(data []byte, msgId string) (*nats.PubAck, error) {
 		Data:    data,
 	}
 	return s.js.PublishMsg(msg, s.publishAckWait)
+}
+
+func (s *Stream) log(format string, v ...any) {
+	log.Printf(fmt.Sprintf("Stream [%s / %s]: ", s.Nats.LogTag, s.Stream)+format, v...)
 }

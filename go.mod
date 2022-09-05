@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/aurora-is-near/borealis.go v0.1.7
 	github.com/buger/jsonparser v1.1.1
+	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/nats-io/nats.go v1.16.0
 	github.com/pierrec/lz4/v4 v4.1.15
 	github.com/prometheus/client_golang v1.13.0
@@ -14,7 +15,6 @@ require (
 	github.com/aurora-is-near/borealis-spec/go v0.0.0-20220616124124-3f4ad3465ecf // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/fxamacker/cbor/v2 v2.4.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/johncgriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
