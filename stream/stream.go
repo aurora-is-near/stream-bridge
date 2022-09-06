@@ -87,6 +87,7 @@ func (s *Stream) Connect() (*nats.StreamInfo, error) {
 		}
 
 		s.Subject = curInfo.Config.Subjects[0]
+		s.log("subject '%s' is chosen", s.Subject)
 	}
 
 	s.log("connected")
