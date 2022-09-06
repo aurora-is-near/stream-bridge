@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"time"
@@ -153,63 +154,67 @@ func (r *Reader) run() {
 					r.finish("unable to fetch LastSeq", err)
 					return
 				}
-			} else {
-				messages, err := r.sub.Fetch(int(batchSize), fetchWait)
+				batchSize = r.countBatchSize(curSeq, lastSeq)
+			}
+
+			messages, err := r.sub.Fetch(int(batchSize), fetchWait)
+			if err != nil {
+				if curSeq >= lastSeq {
+					continue
+				}
+				r.finish(fmt.Sprintf("unable to fetch messages (batchSize=%d)", batchSize), err)
+				return
+			}
+
+			result := make([]*ReaderOutput, 0, len(messages))
+			for _, msg := range messages {
+				if err := msg.Ack(); err != nil {
+					log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.Nats.LogTag, err)
+				}
+				meta, err := msg.Metadata()
 				if err != nil {
-					r.finish("unable to fetch messages", err)
+					r.finish("unable to parse message metadata", err)
+					return
+				}
+				result = append(result, &ReaderOutput{
+					Msg:      msg,
+					Metadata: meta,
+				})
+			}
+
+			if r.opts.SortBatch {
+				sort.Slice(result, func(i, j int) bool {
+					return result[i].Metadata.Sequence.Stream < result[j].Metadata.Sequence.Stream
+				})
+			}
+
+			for _, res := range result {
+				if r.endSeq > 0 && res.Metadata.Sequence.Stream >= r.endSeq {
+					r.finish("finished", nil)
 					return
 				}
 
-				result := make([]*ReaderOutput, 0, len(messages))
-				for _, msg := range messages {
-					if err := msg.Ack(); err != nil {
-						log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.Nats.LogTag, err)
-					}
-					meta, err := msg.Metadata()
-					if err != nil {
-						r.finish("unable to parse message metadata", err)
-						return
-					}
-					result = append(result, &ReaderOutput{
-						Msg:      msg,
-						Metadata: meta,
-					})
+				// Prioritized stop check
+				select {
+				case <-r.stop:
+					r.finish("stopped", nil)
+					return
+				default:
 				}
 
-				if r.opts.SortBatch {
-					sort.Slice(result, func(i, j int) bool {
-						return result[i].Metadata.Sequence.Stream < result[j].Metadata.Sequence.Stream
-					})
+				select {
+				case <-r.stop:
+					r.finish("stopped", nil)
+					return
+				case r.output <- res:
 				}
 
-				for _, res := range result {
-					if r.endSeq > 0 && res.Metadata.Sequence.Stream >= r.endSeq {
-						r.finish("finished", nil)
-						return
-					}
-
-					// Prioritized stop check
-					select {
-					case <-r.stop:
-						r.finish("stopped", nil)
-						return
-					default:
-					}
-
-					select {
-					case <-r.stop:
-						r.finish("stopped", nil)
-						return
-					case r.output <- res:
-					}
-
-					if r.endSeq > 0 && res.Metadata.Sequence.Stream == r.endSeq-1 {
-						r.finish("finished", nil)
-						return
-					}
-					if res.Metadata.Sequence.Stream > curSeq {
-						curSeq = res.Metadata.Sequence.Stream
-					}
+				if r.endSeq > 0 && res.Metadata.Sequence.Stream == r.endSeq-1 {
+					r.finish("finished", nil)
+					return
+				}
+				if res.Metadata.Sequence.Stream > curSeq {
+					curSeq = res.Metadata.Sequence.Stream
 				}
 			}
 		}
@@ -221,17 +226,14 @@ func (r *Reader) countBatchSize(curSeq uint64, lastSeq uint64) uint {
 	if r.endSeq != 0 && r.endSeq-1 < border {
 		border = r.endSeq - 1
 	}
+	if curSeq >= border {
+		return 1
+	}
 	residue := border - curSeq
-
-	batchSize := r.opts.MaxRequestBatchSize
-	if uint64(batchSize) > residue {
-		batchSize = uint(residue)
+	if residue > uint64(r.opts.MaxRequestBatchSize) {
+		return r.opts.MaxRequestBatchSize
 	}
-	if batchSize < 1 {
-		batchSize = 1
-	}
-
-	return batchSize
+	return uint(residue)
 }
 
 func (r *Reader) getLastSeq() (uint64, error) {
