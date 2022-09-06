@@ -91,7 +91,7 @@ func (s *Stream) Connect() (*nats.StreamInfo, error) {
 
 	s.log("connected")
 
-	return info, err
+	return info, nil
 }
 
 func (s *Stream) Disconnect() error {
