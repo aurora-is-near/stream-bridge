@@ -39,6 +39,8 @@ type BlockWriter struct {
 	tipErr  error
 	tipTime time.Time
 	tipMtx  sync.Mutex
+
+	lastWritten util.AtomicPtr[types.AbstractBlock]
 }
 
 func (opts Opts) FillMissingFields() *Opts {
@@ -112,7 +114,7 @@ func (bw *BlockWriter) Write(ctx context.Context, block *types.AbstractBlock, da
 		var ack *nats.PubAck
 		ack, lastErr = bw.output.Write(data, strconv.FormatUint(block.Height, 10), bw.publishAckWait)
 		if lastErr == nil {
-			bw.updateTip(block)
+			bw.lastWritten.Store(block)
 			return ack, nil
 		}
 
@@ -134,6 +136,11 @@ func (bw *BlockWriter) GetTip(ttl time.Duration) (*types.AbstractBlock, time.Tim
 	defer bw.tipMtx.Unlock()
 	if ttl == 0 || time.Since(bw.tipTime) > time.Duration(ttl) {
 		bw.tip, bw.tipTime, bw.tipErr = bw.getTip(ttl)
+	}
+
+	lastWritten := bw.lastWritten.Load()
+	if lastWritten != nil && bw.tipErr == nil && (bw.tip == nil || bw.tip.Height < lastWritten.Height) {
+		return lastWritten, bw.tipTime, nil
 	}
 	return bw.tip, bw.tipTime, bw.tipErr
 }
@@ -160,16 +167,4 @@ func (bw *BlockWriter) getTip(ttl time.Duration) (*types.AbstractBlock, time.Tim
 	}
 
 	return block, infoTime, nil
-}
-
-func (bw *BlockWriter) updateTip(newTip *types.AbstractBlock) {
-	bw.tipMtx.Lock()
-	defer bw.tipMtx.Unlock()
-
-	if bw.tip == nil || bw.tip.Height < newTip.Height {
-		bw.tip = newTip
-		bw.tipErr = nil
-		// bw.tipTime is intentionally NOT updated
-		// because it's not guaranteed to be the real tip (can be duplicate -> outdated)
-	}
 }
