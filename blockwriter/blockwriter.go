@@ -107,6 +107,13 @@ func (bw *BlockWriter) Write(ctx context.Context, block *types.AbstractBlock, da
 
 	var lastErr error
 	for attempt := 1; attempt <= int(bw.opts.MaxWriteAttempts); attempt++ {
+		if attempt > 1 && bw.opts.WriteRetryWaitMs > 0 {
+			log.Printf("BlockWriter: waiting for %vms before next write attempt...", bw.opts.WriteRetryWaitMs)
+			if !util.CtxSleep(ctx, time.Millisecond*time.Duration(bw.opts.WriteRetryWaitMs)) {
+				return nil, ErrCanceled
+			}
+		}
+
 		if ctx.Err() != nil {
 			return nil, ErrCanceled
 		}
@@ -119,13 +126,6 @@ func (bw *BlockWriter) Write(ctx context.Context, block *types.AbstractBlock, da
 		}
 
 		log.Printf("BlockWriter: write attempt [%v / %v] failed: %v", attempt, bw.opts.MaxWriteAttempts, lastErr)
-
-		if bw.opts.WriteRetryWaitMs > 0 {
-			log.Printf("BlockWriter: waiting for %vms before next write attempt...", bw.opts.WriteRetryWaitMs)
-			if !util.CtxSleep(ctx, time.Millisecond*time.Duration(bw.opts.WriteRetryWaitMs)) {
-				return nil, ErrCanceled
-			}
-		}
 	}
 
 	return nil, lastErr
