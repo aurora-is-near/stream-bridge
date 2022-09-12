@@ -1,11 +1,4 @@
-package streambridge
-
-func boolMetric(value bool) float64 {
-	if value {
-		return 1
-	}
-	return 0
-}
+package util
 
 func Max(a uint64, b uint64) uint64 {
 	if a > b {

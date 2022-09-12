@@ -13,8 +13,7 @@
     },
     "Stream": "myblocks",
     "Subject": "myblocks",
-    "RequestWaitMs": 5000,
-    "PublishAckWaitMs": 5000
+    "RequestWaitMs": 5000
   },
   "Output": {
     "Nats": {
@@ -29,27 +28,31 @@
     },
     "Stream": "myblocks",
     "Subject": "myblocks",
-    "RequestWaitMs": 5000,
-    "PublishAckWaitMs": 5000
+    "RequestWaitMs": 5000
   },
   "Reader": {
-    "MaxRps": 1,
+    "MaxRps": 2,
     "BufferSize": 1000,
-    "MaxRequestBatchSize": 100,
+    "MaxRequestBatchSize": 250,
     "SubscribeAckWaitMs": 5000,
     "InactiveThresholdSeconds": 300,
     "FetchTimeoutMs": 10000,
     "SortBatch": true,
     "LastSeqUpdateIntervalSeconds": 5,
-    "Durable": "myconsumer"
+    "Durable": "myconsumer",
+    "StrictStart": false,
+    "WrongSeqToleranceWindow": 50
+  },
+  "Writer": {
+    "PublishAckWaitMs": 5000,
+    "MaxWriteAttempts": 3,
+    "WriteRetryWaitMs": 1000,
+    "TipTtlSeconds": 60
   },
   "InputStartSequence": 0,
   "InputEndSequenece": 0,
   "RestartDelayMs": 2000,
-  "ForceRestartAfterSeconds": 3600,
   "ToleranceWindow": 1000,
-  "MaxPushAttempts": 3,
-  "PushRetryWaitMs": 1000,
   "Metrics": {
     "Server": {
       "ListenAddress": "localhost:9991",

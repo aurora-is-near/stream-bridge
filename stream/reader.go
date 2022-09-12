@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sort"
@@ -21,6 +22,8 @@ type ReaderOpts struct {
 	SortBatch                    bool
 	LastSeqUpdateIntervalSeconds uint
 	Durable                      string
+	StrictStart                  bool
+	WrongSeqToleranceWindow      uint
 }
 
 type ReaderOutput struct {
@@ -79,24 +82,24 @@ func StartReader(opts *ReaderOpts, stream *Stream, startSeq uint64, endSeq uint6
 		output:   make(chan *ReaderOutput, opts.BufferSize),
 	}
 
-	log.Printf("Stream Reader [%v]: subscribing...", stream.Nats.LogTag)
+	log.Printf("Stream Reader [%v]: subscribing...", stream.opts.Nats.LogTag)
 	var err error
 	r.sub, err = stream.js.PullSubscribe(
-		stream.Subject,
+		stream.opts.Subject,
 		opts.Durable,
-		nats.BindStream(stream.Stream),
+		nats.BindStream(stream.opts.Stream),
 		//nats.OrderedConsumer(),
 		nats.StartSequence(startSeq),
 		nats.InactiveThreshold(time.Second*time.Duration(opts.InactiveThresholdSeconds)),
 	)
 	if err != nil {
-		log.Printf("Stream Reader [%v]: unable to subscribe: %v", stream.Nats.LogTag, err)
+		log.Printf("Stream Reader [%v]: unable to subscribe: %v", stream.opts.Nats.LogTag, err)
 		return nil, err
 	}
 
-	log.Printf("Stream Reader [%v]: subscribed", stream.Nats.LogTag)
+	log.Printf("Stream Reader [%v]: subscribed", stream.opts.Nats.LogTag)
 
-	log.Printf("Stream Reader [%v]: running...", stream.Nats.LogTag)
+	log.Printf("Stream Reader [%v]: running...", stream.opts.Nats.LogTag)
 	go r.run()
 
 	return r, nil
@@ -107,7 +110,7 @@ func (r *Reader) Output() <-chan *ReaderOutput {
 }
 
 func (r *Reader) Stop() {
-	log.Printf("Stream Reader [%v]: stopping...", r.stream.Nats.LogTag)
+	log.Printf("Stream Reader [%v]: stopping...", r.stream.opts.Nats.LogTag)
 	for {
 		select {
 		case r.stop <- true:
@@ -118,9 +121,13 @@ func (r *Reader) Stop() {
 }
 
 func (r *Reader) run() {
+	if r.endSeq > 0 && r.startSeq >= r.endSeq {
+		r.finish("finished (r.startSeq >= r.endSeq)", nil)
+		return
+	}
+
 	curSeq := r.startSeq - 1
 	lastSeq, err := r.getLastSeq()
-	lastSeqUpdateTime := time.Now()
 	if err != nil {
 		r.finish("unable to fetch LastSeq", err)
 		return
@@ -129,9 +136,10 @@ func (r *Reader) run() {
 	requestTicker := time.NewTicker(time.Duration(float64(time.Second) / r.opts.MaxRps))
 	defer requestTicker.Stop()
 
-	lastSeqUpdateInterval := time.Second * time.Duration(r.opts.LastSeqUpdateIntervalSeconds)
 	fetchWait := nats.MaxWait(time.Millisecond * time.Duration(r.opts.FetchTimeoutMs))
 
+	first := true
+	consecutiveWrongSeqCount := 0
 	for {
 		// Prioritized stop check
 		select {
@@ -147,9 +155,8 @@ func (r *Reader) run() {
 			return
 		case <-requestTicker.C:
 			batchSize := r.countBatchSize(curSeq, lastSeq)
-			if batchSize < r.opts.MaxRequestBatchSize && time.Since(lastSeqUpdateTime) > lastSeqUpdateInterval {
+			if batchSize < r.opts.MaxRequestBatchSize {
 				lastSeq, err = r.getLastSeq()
-				lastSeqUpdateTime = time.Now()
 				if err != nil {
 					r.finish("unable to fetch LastSeq", err)
 					return
@@ -169,7 +176,7 @@ func (r *Reader) run() {
 			result := make([]*ReaderOutput, 0, len(messages))
 			for _, msg := range messages {
 				if err := msg.Ack(); err != nil {
-					log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.Nats.LogTag, err)
+					log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.opts.Nats.LogTag, err)
 				}
 				meta, err := msg.Metadata()
 				if err != nil {
@@ -189,6 +196,24 @@ func (r *Reader) run() {
 			}
 
 			for _, res := range result {
+				if (!first || r.opts.StrictStart) && res.Metadata.Sequence.Stream != curSeq+1 {
+					log.Printf(
+						"Stream Reader [%v]: wrong sequence detected: %v, expected %v",
+						r.stream.opts.Nats.LogTag,
+						res.Metadata.Sequence.Stream,
+						curSeq+1,
+					)
+					consecutiveWrongSeqCount++
+					if consecutiveWrongSeqCount >= int(r.opts.WrongSeqToleranceWindow) {
+						r.finish("error", errors.New("WrongSeqToleranceWindow exceeded"))
+						return
+					}
+					continue
+				}
+				curSeq = res.Metadata.Sequence.Stream
+				consecutiveWrongSeqCount = 0
+				first = false
+
 				if r.endSeq > 0 && res.Metadata.Sequence.Stream >= r.endSeq {
 					r.finish("finished", nil)
 					return
@@ -213,9 +238,6 @@ func (r *Reader) run() {
 					r.finish("finished", nil)
 					return
 				}
-				if res.Metadata.Sequence.Stream > curSeq {
-					curSeq = res.Metadata.Sequence.Stream
-				}
 			}
 		}
 	}
@@ -237,7 +259,7 @@ func (r *Reader) countBatchSize(curSeq uint64, lastSeq uint64) uint {
 }
 
 func (r *Reader) getLastSeq() (uint64, error) {
-	info, err := r.stream.GetStreamInfo()
+	info, _, err := r.stream.GetInfo(time.Second * time.Duration(r.opts.LastSeqUpdateIntervalSeconds))
 	if err != nil {
 		return 0, err
 	}
@@ -245,7 +267,7 @@ func (r *Reader) getLastSeq() (uint64, error) {
 }
 
 func (r *Reader) finish(logMsg string, err error) {
-	log.Printf("Stream Reader [%v]: %v: %v", r.stream.Nats.LogTag, logMsg, err)
+	log.Printf("Stream Reader [%v]: %v: %v", r.stream.opts.Nats.LogTag, logMsg, err)
 	if err != nil {
 		out := &ReaderOutput{
 			Error: err,

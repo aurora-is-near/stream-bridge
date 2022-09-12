@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/aurora-is-near/stream-bridge/blockwriter"
 	_metrics "github.com/aurora-is-near/stream-bridge/metrics"
 	"github.com/aurora-is-near/stream-bridge/stream"
 	"github.com/aurora-is-near/stream-bridge/streambridge"
@@ -15,7 +16,7 @@ import (
 
 var config = &streambridge.StreamBridge{
 	Mode: "aurora",
-	Input: &stream.Stream{
+	Input: &stream.Opts{
 		Nats: &transport.NatsConnectionConfig{
 			Endpoints: []string{
 				"tls://input.dev:4222",
@@ -26,12 +27,11 @@ var config = &streambridge.StreamBridge{
 			MaxPingsOutstanding: 5,
 			LogTag:              "input",
 		},
-		Stream:           "myblocks",
-		Subject:          "myblocks",
-		RequestWaitMs:    5000,
-		PublishAckWaitMs: 5000,
+		Stream:        "myblocks",
+		Subject:       "myblocks",
+		RequestWaitMs: 5000,
 	},
-	Output: &stream.Stream{
+	Output: &stream.Opts{
 		Nats: &transport.NatsConnectionConfig{
 			Endpoints: []string{
 				"tls://output.dev:4222",
@@ -42,29 +42,33 @@ var config = &streambridge.StreamBridge{
 			MaxPingsOutstanding: 5,
 			LogTag:              "output",
 		},
-		Stream:           "myblocks",
-		Subject:          "myblocks",
-		RequestWaitMs:    5000,
-		PublishAckWaitMs: 5000,
+		Stream:        "myblocks",
+		Subject:       "myblocks",
+		RequestWaitMs: 5000,
 	},
 	Reader: &stream.ReaderOpts{
-		MaxRps:                       1,
+		MaxRps:                       2,
 		BufferSize:                   1000,
-		MaxRequestBatchSize:          100,
+		MaxRequestBatchSize:          250,
 		SubscribeAckWaitMs:           5000,
 		InactiveThresholdSeconds:     300,
 		FetchTimeoutMs:               10000,
 		SortBatch:                    true,
 		LastSeqUpdateIntervalSeconds: 5,
 		Durable:                      "myconsumer",
+		StrictStart:                  false,
+		WrongSeqToleranceWindow:      50,
 	},
-	InputStartSequence:       0,
-	InputEndSequenece:        0,
-	RestartDelayMs:           2000,
-	ForceRestartAfterSeconds: 3600,
-	ToleranceWindow:          1000,
-	MaxPushAttempts:          3,
-	PushRetryWaitMs:          1000,
+	Writer: &blockwriter.Opts{
+		PublishAckWaitMs: 5000,
+		MaxWriteAttempts: 3,
+		WriteRetryWaitMs: 1000,
+		TipTtlSeconds:    60,
+	},
+	InputStartSequence: 0,
+	InputEndSequenece:  0,
+	RestartDelayMs:     2000,
+	ToleranceWindow:    1000,
 	Metrics: &metrics.Metrics{
 		Server: _metrics.Server{
 			ListenAddress: "localhost:9991",
