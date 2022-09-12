@@ -43,8 +43,8 @@ func (m *Metrics) Start() error {
 		labelValues = append(labelValues, value)
 	}
 
-	m.InputStream = createStreamMetrics("input", m.Server, labelNames, labelValues)
-	m.OutputStream = createStreamMetrics("output", m.Server, labelNames, labelValues)
+	m.InputStream = createStreamMetrics("input", &m.Server, labelNames, labelValues)
+	m.OutputStream = createStreamMetrics("output", &m.Server, labelNames, labelValues)
 
 	m.InputStartSeq = m.Server.AddGauge(
 		"input_start_seq",

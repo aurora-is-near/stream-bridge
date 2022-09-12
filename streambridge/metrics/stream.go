@@ -25,7 +25,7 @@ type StreamMetrics struct {
 	wg   sync.WaitGroup
 }
 
-func createStreamMetrics(streamName string, server _metrics.Server, labelNames []string, labelValues []string) *StreamMetrics {
+func createStreamMetrics(streamName string, server *_metrics.Server, labelNames []string, labelValues []string) *StreamMetrics {
 	return &StreamMetrics{
 		Connected: server.AddGauge(
 			fmt.Sprintf("%v_connected", streamName),
