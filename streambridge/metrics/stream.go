@@ -79,6 +79,8 @@ func (sm *StreamMetrics) observe() {
 	ticker := time.NewTicker(streamObserveInterval)
 	defer ticker.Stop()
 
+	sm.update()
+
 	for {
 		select {
 		case <-sm.stop:
@@ -90,14 +92,18 @@ func (sm *StreamMetrics) observe() {
 		case <-sm.stop:
 			return
 		case <-ticker.C:
-			info, _, err := sm.s.GetInfo(streamObserveInterval)
-			if err != nil {
-				sm.FirstSeq.Set(float64(info.State.FirstSeq))
-				sm.LastSeq.Set(float64(info.State.LastSeq))
-			}
-			stats := sm.s.Stats()
-			sm.InBytes.Set(float64(stats.InBytes))
-			sm.OutBytes.Set(float64(stats.OutBytes))
+			sm.update()
 		}
 	}
+}
+
+func (sm *StreamMetrics) update() {
+	info, _, err := sm.s.GetInfo(streamObserveInterval / 2)
+	if err == nil {
+		sm.FirstSeq.Set(float64(info.State.FirstSeq))
+		sm.LastSeq.Set(float64(info.State.LastSeq))
+	}
+	stats := sm.s.Stats()
+	sm.InBytes.Set(float64(stats.InBytes))
+	sm.OutBytes.Set(float64(stats.OutBytes))
 }
