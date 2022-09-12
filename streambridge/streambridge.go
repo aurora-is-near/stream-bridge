@@ -92,6 +92,9 @@ func (sb *StreamBridge) Run() error {
 	if cancelErr != nil {
 		return cancelErr
 	}
+	if loopErr == errCanceled {
+		return nil
+	}
 	return loopErr
 }
 
