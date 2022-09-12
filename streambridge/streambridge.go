@@ -115,7 +115,7 @@ func (sb *StreamBridge) loop(ctx context.Context) error {
 			if ctx.Err() != nil {
 				return errCanceled
 			}
-			input, _ := stream.ConnectStream(sb.Input)
+			input, _ = stream.ConnectStream(sb.Input)
 			if input != nil {
 				sb.Metrics.InputStream.StartObserving(input)
 			}
@@ -166,6 +166,7 @@ func (sb *StreamBridge) sync(ctx context.Context, input, output *stream.Stream) 
 		return errors.New("unable to parse last output block, see logs for detailed error")
 	}
 	if err != nil {
+		log.Printf("Can't start writer: %v, will restart output connection", err)
 		return errOutputConnProblem
 	}
 	if tip != nil {
