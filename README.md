@@ -20,6 +20,7 @@ Go-tool for copying Aurora/Near block JetStreams, using content verification and
 - `RestartDelayMs` - if connection was lost, this amount of milliseconds will be waited before starting next reconnection.
 - `ToleranceWindow` - Maximum number of consecutive blocks that are corrupted, or blocks whose `prev_hash` doesn't match the hash of last block in output stream. After tolerance window is exceeded, program exits with error.
 - `Metrics.Labels` - absolutely custom keys and values, sysadmin is free to arrange it in a way that will help him distinguishing different metrics in grafana.
+- `Metrics.StdoutIntervalSeconds` - how frequently a basic metric representation should be spewed out to stdout. `0` means never.
 
 ## Pipeline lifecycle
 1. Pipeline starts.

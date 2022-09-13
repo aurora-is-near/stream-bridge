@@ -81,6 +81,7 @@ var config = &streambridge.StreamBridge{
 			"stream":        "myblocks",
 			"whatever":      "whatever",
 		},
+		StdoutIntervalSeconds: 10,
 	},
 }
 

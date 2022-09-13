@@ -1,13 +1,23 @@
 package metrics
 
 import (
+	"log"
+	"os"
+	"strconv"
+	"sync"
+	"time"
+
 	_metrics "github.com/aurora-is-near/stream-bridge/metrics"
+	"github.com/aurora-is-near/stream-bridge/util"
+	"github.com/olekukonko/tablewriter"
 	"github.com/prometheus/client_golang/prometheus"
+	io_prometheus_client "github.com/prometheus/client_model/go"
 )
 
 type Metrics struct {
-	Server _metrics.Server
-	Labels map[string]string
+	Server                _metrics.Server
+	Labels                map[string]string
+	StdoutIntervalSeconds uint
 
 	InputStream  *StreamMetrics `json:"-"`
 	OutputStream *StreamMetrics `json:"-"`
@@ -33,6 +43,9 @@ type Metrics struct {
 	HashMismatchSkipsCount prometheus.Counter `json:"-"`
 
 	ConsecutiveWrongBlocks prometheus.Gauge `json:"-"`
+
+	stdoutStop chan struct{}
+	stdoutWg   sync.WaitGroup
 }
 
 func (m *Metrics) Start() error {
@@ -142,7 +155,17 @@ func (m *Metrics) Start() error {
 		labelNames,
 	).WithLabelValues(labelValues...)
 
-	return m.Server.Start()
+	if err := m.Server.Start(); err != nil {
+		return err
+	}
+
+	m.stdoutStop = make(chan struct{})
+	if m.StdoutIntervalSeconds > 0 {
+		m.stdoutWg.Add(1)
+		go m.stdoutLoop()
+	}
+
+	return nil
 }
 
 func (m *Metrics) Closed() <-chan error {
@@ -150,5 +173,54 @@ func (m *Metrics) Closed() <-chan error {
 }
 
 func (m *Metrics) Stop() {
+	close(m.stdoutStop)
+	m.stdoutWg.Wait()
 	m.Server.Stop()
+}
+
+func (m *Metrics) stdoutLoop() {
+	defer m.stdoutWg.Done()
+
+	ticker := time.NewTicker(time.Second * time.Duration(m.StdoutIntervalSeconds))
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-m.stdoutStop:
+			return
+		default:
+		}
+
+		select {
+		case <-m.stdoutStop:
+			return
+		case <-ticker.C:
+			m.spewStdout()
+		}
+	}
+}
+
+func (m *Metrics) spewStdout() {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"", "INPUT_SEQ", "OUTPUT_SEQ", "INPUT_HEIGHT", "OUTPUT_HEIGHT"})
+	table.AppendBulk([][]string{
+		{"LAST", maxGauge(m.InputStream.LastSeq, m.ReaderSeq), maxGauge(m.OutputStream.LastSeq, m.LastWrittenOutputSeq), "", maxGauge(m.WriterTipHeight)},
+		{"READER", maxGauge(m.ReaderSeq), "", maxGauge(m.ReaderHeight), ""},
+		{"WRITER", maxGauge(m.LastWrittenInputSeq), maxGauge(m.LastWrittenOutputSeq), maxGauge(m.LastWrittenHeight), maxGauge(m.LastWrittenHeight)},
+		{"FIRST", maxGauge(m.InputStream.FirstSeq), maxGauge(m.OutputStream.FirstSeq), "", ""},
+	})
+	table.Render()
+}
+
+func maxGauge(gs ...prometheus.Gauge) string {
+	max := uint64(0)
+	for _, g := range gs {
+		var out io_prometheus_client.Metric
+		if err := g.Write(&out); err != nil {
+			log.Printf("Metric2stdout: can't read metric: %v", err)
+			return "error"
+		}
+		max = util.Max(max, uint64(out.Gauge.GetValue()))
+	}
+	return strconv.FormatUint(max, 10)
 }
