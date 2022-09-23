@@ -82,8 +82,13 @@ func StartReader(opts *ReaderOpts, stream *Stream, startSeq uint64, endSeq uint6
 		output:   make(chan *ReaderOutput, opts.BufferSize),
 	}
 
+	log.Printf("Stream Reader [%v]: making sure that previous consumer is deleted...", stream.opts.Nats.LogTag)
+	err := stream.js.DeleteConsumer(stream.opts.Stream, opts.Durable)
+	if err != nil && err != nats.ErrConsumerNotFound {
+		log.Printf("Stream Reader [%v]: can't delete previous consumer: %v", stream.opts.Nats.LogTag, err)
+	}
+
 	log.Printf("Stream Reader [%v]: subscribing...", stream.opts.Nats.LogTag)
-	var err error
 	r.sub, err = stream.js.PullSubscribe(
 		stream.opts.Subject,
 		opts.Durable,
