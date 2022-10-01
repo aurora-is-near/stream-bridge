@@ -13,16 +13,22 @@ import (
 )
 
 var (
-	server    = flag.String("server", "", "NATS server URL")
-	creds     = flag.String("creds", "", "path to NATS credentials file")
-	consumer  = flag.String("consumer", "", "NATS JetStream durable consumer name")
-	streamA   = flag.String("stream-a", "", "stream A name")
-	seqA      = flag.Uint64("seq-a", 1, "start sequence on stream A")
-	streamB   = flag.String("stream-b", "", "stream B name")
-	seqB      = flag.Uint64("seq-b", 1, "start sequence on stream B")
-	mode      = flag.String("mode", "simple", "must be one of ['simple', 'aurora', 'near']")
-	batchSize = flag.Uint("batch", 500, "max request batch size")
-	rps       = flag.Float64("rps", 1, "max requests per second")
+	server                = flag.String("server", "", "NATS server URL")
+	creds                 = flag.String("creds", "", "path to NATS credentials file")
+	consumer              = flag.String("consumer", "", "NATS JetStream durable consumer name")
+	streamA               = flag.String("stream-a", "", "stream A name")
+	seqA                  = flag.Uint64("seq-a", 1, "start sequence on stream A")
+	streamB               = flag.String("stream-b", "", "stream B name")
+	seqB                  = flag.Uint64("seq-b", 1, "start sequence on stream B")
+	mode                  = flag.String("mode", "simple", "must be one of ['simple', 'aurora', 'near']")
+	batchSize             = flag.Uint("batch", 500, "max request batch size")
+	rps                   = flag.Float64("rps", 1, "max requests per second")
+	skipDuplicates        = flag.Bool("skip-duplicates", false, "")
+	skipUnequalDuplicates = flag.Bool("skip-unequal-duplicates", false, "")
+	skipGaps              = flag.Bool("skip-gaps", false, "")
+	skipDownjumps         = flag.Bool("skip-downjumps", false, "")
+	skipCorrupted         = flag.Bool("skip-corrupted", false, "")
+	skipDiscrepancy       = flag.Bool("skip-discrepancy", false, "")
 )
 
 func main() {
@@ -91,6 +97,12 @@ func main() {
 			StartSeq:        *seqB,
 			ReconnectWaitMs: 2000,
 		},
+		SkipDuplicates:        *skipDuplicates,
+		SkipUnequalDuplicates: *skipUnequalDuplicates,
+		SkipGaps:              *skipGaps,
+		SkipDownjumps:         *skipDownjumps,
+		SkipCorrupted:         *skipCorrupted,
+		SkipDiscrepancy:       *skipDiscrepancy,
 	}
 	if err := sc.Run(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
