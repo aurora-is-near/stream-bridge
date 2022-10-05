@@ -4,6 +4,7 @@ type AbstractBlock struct {
 	Hash     string
 	PrevHash string
 	Height   uint64
+	Sequence uint64
 }
 
 func (ab *AuroraBlock) ToAbstractBlock() *AbstractBlock {

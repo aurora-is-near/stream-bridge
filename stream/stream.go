@@ -122,9 +122,7 @@ func (s *Stream) Get(seq uint64) (*nats.RawStreamMsg, error) {
 	return s.js.GetMsg(s.opts.Stream, seq, s.requestWait)
 }
 
-func (s *Stream) Write(data []byte, msgId string, publishAckWait nats.AckWait) (*nats.PubAck, error) {
-	header := make(nats.Header)
-	header.Add(nats.MsgIdHdr, msgId)
+func (s *Stream) Write(data []byte, header nats.Header, publishAckWait nats.AckWait) (*nats.PubAck, error) {
 	header.Add(nats.ExpectedStreamHdr, s.opts.Stream)
 	msg := &nats.Msg{
 		Subject: s.opts.Subject,

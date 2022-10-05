@@ -118,10 +118,20 @@ func (bw *BlockWriter) Write(ctx context.Context, block *types.AbstractBlock, da
 			return nil, ErrCanceled
 		}
 
+		header := make(nats.Header)
+		header.Add(nats.MsgIdHdr, strconv.FormatUint(block.Height, 10))
+		header.Add(nats.ExpectedLastMsgIdHdr, strconv.FormatUint(tip.Height, 10))
+		header.Add(nats.ExpectedLastSeqHdr, strconv.FormatUint(tip.Sequence, 10))
+
 		var ack *nats.PubAck
-		ack, lastErr = bw.output.Write(data, strconv.FormatUint(block.Height, 10), bw.publishAckWait)
+		ack, lastErr = bw.output.Write(data, header, bw.publishAckWait)
 		if lastErr == nil {
-			bw.lastWritten.Store(block)
+			bw.lastWritten.Store(&types.AbstractBlock{
+				Hash:     block.Hash,
+				PrevHash: block.PrevHash,
+				Height:   block.Height,
+				Sequence: ack.Sequence,
+			})
 			return ack, nil
 		}
 
@@ -165,6 +175,7 @@ func (bw *BlockWriter) getTip(ttl time.Duration) (*types.AbstractBlock, time.Tim
 		log.Printf("Block writer: corrupted tip (seq=%d): %v", info.State.LastSeq, err)
 		return nil, infoTime, ErrCorruptedTip
 	}
+	block.Sequence = info.State.LastSeq
 
 	return block, infoTime, nil
 }
