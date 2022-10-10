@@ -3,9 +3,11 @@ module github.com/aurora-is-near/stream-bridge
 go 1.18
 
 require (
+	github.com/aurora-is-near/aurora-relayer-sqlblock v0.1.3
 	github.com/aurora-is-near/borealis.go v0.1.7
 	github.com/buger/jsonparser v1.1.1
 	github.com/fxamacker/cbor/v2 v2.4.0
+	github.com/gogo/protobuf v1.3.2
 	github.com/nats-io/nats.go v1.16.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pierrec/lz4/v4 v4.1.15
@@ -16,7 +18,10 @@ require (
 require (
 	github.com/aurora-is-near/borealis-spec/go v0.0.0-20220616124124-3f4ad3465ecf // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/doug-martin/goqu/v9 v9.18.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/johncgriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
