@@ -126,6 +126,7 @@ func (sb *StreamBackup) pullSegment(l, r uint64) error {
 				Headers:  make(map[string]*messagebackup.HeaderValues),
 				UnixNano: uint64(cur.Metadata.Timestamp.UnixNano()),
 				Data:     cur.Msg.Data,
+				Sequence: cur.Metadata.Sequence.Stream,
 			}
 			for header, values := range cur.Msg.Header {
 				mb.Headers[header] = &messagebackup.HeaderValues{Values: values}

@@ -10,4 +10,5 @@ message MessageBackup {
     map<string, HeaderValues> headers = 1;
     uint64 unix_nano = 2;
     bytes data = 3;
+    uint64 sequence = 4;
 }
