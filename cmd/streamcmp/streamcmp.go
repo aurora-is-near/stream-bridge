@@ -55,7 +55,7 @@ func main() {
 
 	sc := &streamcmp.StreamCmp{
 		Mode: *mode,
-		StreamA: &streamcmp.StreamWrapper{
+		StreamA: &stream.AutoReader{
 			Stream: &stream.Opts{
 				Nats: &transport.NatsConnectionConfig{
 					Endpoints: []string{*server},
@@ -73,10 +73,9 @@ func main() {
 				StrictStart:             true,
 				WrongSeqToleranceWindow: 10,
 			},
-			StartSeq:        *seqA,
 			ReconnectWaitMs: 2000,
 		},
-		StreamB: &streamcmp.StreamWrapper{
+		StreamB: &stream.AutoReader{
 			Stream: &stream.Opts{
 				Nats: &transport.NatsConnectionConfig{
 					Endpoints: []string{*server},
@@ -94,9 +93,10 @@ func main() {
 				StrictStart:             true,
 				WrongSeqToleranceWindow: 10,
 			},
-			StartSeq:        *seqB,
 			ReconnectWaitMs: 2000,
 		},
+		StartSeqA:             *seqA,
+		StartSeqB:             *seqB,
 		SkipDuplicates:        *skipDuplicates,
 		SkipUnequalDuplicates: *skipUnequalDuplicates,
 		SkipGaps:              *skipGaps,

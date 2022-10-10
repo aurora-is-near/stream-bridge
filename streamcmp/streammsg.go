@@ -45,7 +45,7 @@ func (sm *streamMsg) decode(mode string) error {
 	return nil
 }
 
-func (sc *StreamCmp) readNext(s *StreamWrapper) (*streamMsg, error) {
+func (sc *StreamCmp) readNext(s *stream.AutoReader) (*streamMsg, error) {
 	select {
 	case <-sc.interrupt:
 		return nil, errInterrupted
@@ -63,7 +63,7 @@ func (sc *StreamCmp) readNext(s *StreamWrapper) (*streamMsg, error) {
 	return msg, nil
 }
 
-func (sc *StreamCmp) getNextValid(streamName string, s *StreamWrapper, prev *streamMsg, lastUpd *util.AtomicPtr[streamMsg]) (*streamMsg, error) {
+func (sc *StreamCmp) getNextValid(streamName string, s *stream.AutoReader, prev *streamMsg, lastUpd *util.AtomicPtr[streamMsg]) (*streamMsg, error) {
 	var err error
 	var cur *streamMsg
 	for {

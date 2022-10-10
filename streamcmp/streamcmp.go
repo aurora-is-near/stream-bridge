@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aurora-is-near/stream-bridge/stream"
 	"github.com/aurora-is-near/stream-bridge/util"
 )
 
@@ -18,8 +19,10 @@ const stdoutInterval = time.Second * 5
 
 type StreamCmp struct {
 	Mode                  string
-	StreamA               *StreamWrapper
-	StreamB               *StreamWrapper
+	StreamA               *stream.AutoReader
+	StreamB               *stream.AutoReader
+	StartSeqA             uint64
+	StartSeqB             uint64
 	SkipDuplicates        bool
 	SkipUnequalDuplicates bool
 	SkipGaps              bool
@@ -45,9 +48,9 @@ func (sc *StreamCmp) Run() error {
 	defer sc.stdoutWg.Wait()
 	defer close(sc.stdoutStop)
 
-	sc.StreamA.Start()
+	sc.StreamA.Start(sc.StartSeqA)
 	defer sc.StreamA.Stop()
-	sc.StreamB.Start()
+	sc.StreamB.Start(sc.StartSeqB)
 	defer sc.StreamB.Stop()
 
 	var err error
@@ -65,8 +68,8 @@ func (sc *StreamCmp) Run() error {
 				fetchA = curA.block.Height <= curB.block.Height
 				compare = curA.block.Height == curB.block.Height
 			} else {
-				relSeqA := curA.out.Metadata.Sequence.Stream - sc.StreamA.StartSeq
-				relSeqB := curB.out.Metadata.Sequence.Stream - sc.StreamB.StartSeq
+				relSeqA := curA.out.Metadata.Sequence.Stream - sc.StartSeqA
+				relSeqB := curB.out.Metadata.Sequence.Stream - sc.StartSeqB
 				fetchA = relSeqA <= relSeqB
 				compare = relSeqA == relSeqB
 			}

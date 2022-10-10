@@ -1,48 +1,43 @@
-package streamcmp
+package stream
 
 import (
 	"log"
 	"sync"
 	"time"
-
-	"github.com/aurora-is-near/stream-bridge/stream"
 )
 
-type StreamWrapper struct {
-	Stream          *stream.Opts
-	Reader          *stream.ReaderOpts
-	StartSeq        uint64
+type AutoReader struct {
+	Stream          *Opts
+	Reader          *ReaderOpts
 	ReconnectWaitMs uint
 
-	output chan *stream.ReaderOutput
+	output chan *ReaderOutput
 	stop   chan struct{}
 	wg     sync.WaitGroup
 }
 
-func (sw *StreamWrapper) Start() {
-	sw.output = make(chan *stream.ReaderOutput)
+func (sw *AutoReader) Start(startSeq uint64) {
+	sw.output = make(chan *ReaderOutput)
 	sw.stop = make(chan struct{})
 	sw.wg.Add(1)
-	go sw.run()
+	go sw.run(startSeq)
 }
 
-func (sc *StreamWrapper) Output() chan *stream.ReaderOutput {
+func (sc *AutoReader) Output() chan *ReaderOutput {
 	return sc.output
 }
 
-func (sw *StreamWrapper) Stop() {
+func (sw *AutoReader) Stop() {
 	close(sw.stop)
 	sw.wg.Wait()
 }
 
-func (sw *StreamWrapper) run() {
+func (sw *AutoReader) run(nextSeq uint64) {
 	defer sw.wg.Done()
 
-	nextSeq := sw.StartSeq
-
 	var err error
-	var s *stream.Stream
-	var r *stream.Reader
+	var s *Stream
+	var r *Reader
 
 	disconnect := func() {
 		if r != nil {
@@ -79,7 +74,7 @@ func (sw *StreamWrapper) run() {
 
 		if s == nil || r == nil {
 			disconnect()
-			s, err = stream.ConnectStream(sw.Stream)
+			s, err = ConnectStream(sw.Stream)
 			if err != nil {
 				log.Printf("Can't connect stream: %v", err)
 				connectionProblem = true
@@ -92,7 +87,7 @@ func (sw *StreamWrapper) run() {
 			default:
 			}
 
-			r, err = stream.StartReader(sw.Reader, s, nextSeq, 0)
+			r, err = StartReader(sw.Reader, s, nextSeq, 0)
 			if err != nil {
 				log.Printf("Can't start reader: %v", err)
 				connectionProblem = true
