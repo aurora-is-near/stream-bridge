@@ -26,7 +26,7 @@ var (
 	dir             = flag.String("dir", "backup", "output dir")
 	compress        = flag.Int("compress", 9, "compression level [0-9]")
 	maxChunkEntries = flag.Int("max-chunk-entries", 1_000_000, "max entries per chunk")
-	maxChunkSize    = flag.Int("max-chunk-size", 1024, "max chunk size in megabytes")
+	maxChunkSize    = flag.Int("max-chunk-size", 1024, "max chunk size in megabytes (before compression)")
 )
 
 func main() {
