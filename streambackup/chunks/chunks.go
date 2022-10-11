@@ -15,8 +15,8 @@ import (
 
 var ErrNotFound = errors.New("not found")
 
-type chunkRange struct {
-	l, r uint64
+type ChunkRange struct {
+	L, R uint64
 }
 
 type Chunks struct {
@@ -26,7 +26,7 @@ type Chunks struct {
 	MaxEntriesPerChunk int
 	MaxChunkSize       int
 
-	chunks []chunkRange
+	chunks []ChunkRange
 
 	writerTmpPath   string
 	writerFile      *os.File
@@ -37,7 +37,7 @@ type Chunks struct {
 	readerFile     *os.File
 	readerGzip     *gzip.Reader
 	readerTar      *tar.Reader
-	readerChunk    chunkRange
+	readerChunk    ChunkRange
 	readerLastSeek uint64
 }
 
@@ -77,7 +77,7 @@ func (c *Chunks) Open() error {
 		if l > r {
 			continue
 		}
-		c.chunks = append(c.chunks, chunkRange{l: l, r: r})
+		c.chunks = append(c.chunks, ChunkRange{L: l, R: r})
 	}
 
 	c.writerTmpPath = filepath.Join(c.Dir, fmt.Sprintf("%snext.tmp", c.ChunkNamePrefix))
@@ -92,23 +92,23 @@ func (c *Chunks) GetLeftmostAbsentRange(min, max uint64) (l uint64, r uint64, er
 
 	l, r = min, max
 	for _, chunk := range c.chunks {
-		if chunk.r < l || chunk.l > r {
+		if chunk.R < l || chunk.L > r {
 			continue
 		}
-		if chunk.l <= l && chunk.r >= r {
+		if chunk.L <= l && chunk.R >= r {
 			return 0, 0, ErrNotFound
 		}
-		if chunk.l <= l {
-			l = chunk.r + 1
+		if chunk.L <= l {
+			l = chunk.R + 1
 		} else {
-			r = chunk.l - 1
+			r = chunk.L - 1
 		}
 	}
 	return l, r, nil
 }
 
-func (c *Chunks) getChunkPath(chunk chunkRange) string {
-	return filepath.Join(c.Dir, fmt.Sprintf("%s%09d-%09d.tar.gz", c.ChunkNamePrefix, chunk.l, chunk.r))
+func (c *Chunks) getChunkPath(chunk ChunkRange) string {
+	return filepath.Join(c.Dir, fmt.Sprintf("%s%09d-%09d.tar.gz", c.ChunkNamePrefix, chunk.L, chunk.R))
 }
 
 func (c *Chunks) Flush() error {
@@ -151,7 +151,7 @@ func (c *Chunks) startNewChunk(pos uint64) error {
 		return err
 	}
 	c.writerTar = tar.NewWriter(c.writerGzip)
-	c.chunks = append(c.chunks, chunkRange{l: pos, r: pos})
+	c.chunks = append(c.chunks, ChunkRange{L: pos, R: pos})
 	c.writerChunkSize = 0
 	return nil
 }
@@ -162,8 +162,8 @@ func (c *Chunks) Write(pos uint64, payload []byte) error {
 		newChunkNeeded = true
 	} else {
 		curChunk := c.chunks[len(c.chunks)-1]
-		newChunkNeeded = curChunk.r != pos-1
-		newChunkNeeded = newChunkNeeded || ((curChunk.r-curChunk.l+1)+1 > uint64(c.MaxEntriesPerChunk))
+		newChunkNeeded = curChunk.R != pos-1
+		newChunkNeeded = newChunkNeeded || ((curChunk.R-curChunk.L+1)+1 > uint64(c.MaxEntriesPerChunk))
 		newChunkNeeded = newChunkNeeded || (c.writerChunkSize+len(payload) > c.MaxChunkSize)
 	}
 	if newChunkNeeded {
@@ -189,7 +189,7 @@ func (c *Chunks) Write(pos uint64, payload []byte) error {
 		return err
 	}
 	c.writerChunkSize += len(payload)
-	c.chunks[len(c.chunks)-1].r = pos
+	c.chunks[len(c.chunks)-1].R = pos
 
 	return nil
 }
@@ -213,12 +213,12 @@ func (c *Chunks) SeekReader(pos uint64) error {
 	idx := -1
 	var leftmost uint64
 	for i, chunk := range c.chunks {
-		if chunk.r < pos {
+		if chunk.R < pos {
 			continue
 		}
 		candidate := pos
-		if chunk.l > pos {
-			candidate = chunk.l
+		if chunk.L > pos {
+			candidate = chunk.L
 		}
 		if idx < 0 || candidate < leftmost {
 			idx, leftmost = i, candidate
@@ -262,7 +262,7 @@ func (c *Chunks) ReadNext() (uint64, []byte, error) {
 	for {
 		hdr, err := c.readerTar.Next()
 		if err == io.EOF {
-			if err := c.SeekReader(c.readerChunk.r + 1); err != nil {
+			if err := c.SeekReader(c.readerChunk.R + 1); err != nil {
 				return 0, nil, err
 			}
 			continue
@@ -286,4 +286,10 @@ func (c *Chunks) ReadNext() (uint64, []byte, error) {
 		}
 		return cur, data, nil
 	}
+}
+
+func (c *Chunks) GetChunkRanges() []ChunkRange {
+	chunksCopy := make([]ChunkRange, len(c.chunks))
+	copy(chunksCopy, c.chunks)
+	return chunksCopy
 }
