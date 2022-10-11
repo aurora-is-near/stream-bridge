@@ -120,8 +120,10 @@ func (bw *BlockWriter) Write(ctx context.Context, block *types.AbstractBlock, da
 
 		header := make(nats.Header)
 		header.Add(nats.MsgIdHdr, strconv.FormatUint(block.Height, 10))
-		header.Add(nats.ExpectedLastMsgIdHdr, strconv.FormatUint(tip.Height, 10))
-		header.Add(nats.ExpectedLastSeqHdr, strconv.FormatUint(tip.Sequence, 10))
+		if tip != nil {
+			header.Add(nats.ExpectedLastMsgIdHdr, strconv.FormatUint(tip.Height, 10))
+			header.Add(nats.ExpectedLastSeqHdr, strconv.FormatUint(tip.Sequence, 10))
+		}
 
 		var ack *nats.PubAck
 		ack, lastErr = bw.output.Write(data, header, bw.publishAckWait)
