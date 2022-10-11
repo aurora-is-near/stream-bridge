@@ -80,7 +80,7 @@ func (c *Chunks) Open() error {
 		c.chunks = append(c.chunks, chunkRange{l: l, r: r})
 	}
 
-	c.writerTmpPath = filepath.Join(c.Dir, fmt.Sprintf("%stmp.tar.gz", c.ChunkNamePrefix))
+	c.writerTmpPath = filepath.Join(c.Dir, fmt.Sprintf("%snext.tmp", c.ChunkNamePrefix))
 
 	return nil
 }
