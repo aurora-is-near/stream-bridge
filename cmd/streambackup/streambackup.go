@@ -35,9 +35,6 @@ func main() {
 	if len(*server) == 0 {
 		log.Fatal("-server must be specified")
 	}
-	if len(*creds) == 0 {
-		log.Fatal("-creds must be specified")
-	}
 	if len(*consumer) == 0 {
 		log.Fatal("-consumer must be specified")
 	}
