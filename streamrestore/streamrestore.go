@@ -108,6 +108,9 @@ func (sr *StreamRestore) push() error {
 		log.Printf("Nothing to do")
 		return nil
 	}
+	if err == errInterrupted {
+		return errInterrupted
+	}
 	if err != nil {
 		return fmt.Errorf("can't figure start chunk: %w", err)
 	}
