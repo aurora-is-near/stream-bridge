@@ -156,8 +156,8 @@ func (sr *StreamRestore) push() error {
 			case nil:
 				lastWrittenSeq = ack.Sequence
 			case blockwriter.ErrHashMismatch:
-				fmt.Printf("[WRONGHASH]: seq=%v", bb.sequence)
-				consecutiveWrongBlocks++
+				fmt.Printf("[WRONGHASH]: seq=%v\n", bb.sequence)
+				lastBlockWasWrong = true
 			case blockwriter.ErrLowHeight:
 			default:
 				log.Printf("Got writer problem, will restart connection: %v", err)
