@@ -47,7 +47,8 @@
     "PublishAckWaitMs": 5000,
     "MaxWriteAttempts": 3,
     "WriteRetryWaitMs": 1000,
-    "TipTtlSeconds": 60
+    "TipTtlSeconds": 60,
+    "DisableLastSequenceCheck": false
   },
   "InputStartSequence": 0,
   "InputEndSequenece": 0,
