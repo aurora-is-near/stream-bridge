@@ -176,6 +176,12 @@ func (sb *StreamBridge) sync(ctx context.Context, input, output *stream.Stream) 
 		sb.Metrics.WriterTipHeight.Set(float64(tip.Height))
 	}
 
+	if tip == nil {
+		log.Printf("Current tip: absent")
+	} else {
+		log.Printf("Current tip: seq=%v, height=%v", tip.Sequence, tip.Height)
+	}
+
 	log.Printf("Figuring out the best input seq to start from...")
 	startSeq, err := sb.calculateStartSeq(ctx, input, tip)
 	if err != nil {

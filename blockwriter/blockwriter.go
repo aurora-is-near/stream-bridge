@@ -141,6 +141,11 @@ func (bw *BlockWriter) Write(ctx context.Context, block *types.AbstractBlock, da
 		}
 
 		log.Printf("BlockWriter: write attempt [%v / %v] failed: %v", attempt, bw.opts.MaxWriteAttempts, lastErr)
+		if tip == nil {
+			log.Printf("BlockWriter: current tip: absent")
+		} else {
+			log.Printf("BlockWriter: current tip: seq=%v, height=%v", tip.Sequence, tip.Height)
+		}
 	}
 
 	return nil, lastErr
