@@ -23,11 +23,11 @@ var (
 )
 
 type Opts struct {
-	PublishAckWaitMs         uint
-	MaxWriteAttempts         uint
-	WriteRetryWaitMs         uint
-	TipTtlSeconds            float64
-	DisableLastSequenceCheck bool
+	PublishAckWaitMs     uint
+	MaxWriteAttempts     uint
+	WriteRetryWaitMs     uint
+	TipTtlSeconds        float64
+	DisableExpectedCheck uint64 // Seq of next message
 }
 
 type BlockWriter struct {
@@ -122,8 +122,8 @@ func (bw *BlockWriter) Write(ctx context.Context, block *types.AbstractBlock, da
 		header := make(nats.Header)
 		header.Add(nats.MsgIdHdr, strconv.FormatUint(block.Height, 10))
 		if tip != nil {
-			header.Add(nats.ExpectedLastMsgIdHdr, strconv.FormatUint(tip.Height, 10))
-			if !bw.opts.DisableLastSequenceCheck {
+			if bw.opts.DisableExpectedCheck != tip.Sequence+1 {
+				header.Add(nats.ExpectedLastMsgIdHdr, strconv.FormatUint(tip.Height, 10))
 				header.Add(nats.ExpectedLastSeqHdr, strconv.FormatUint(tip.Sequence, 10))
 			}
 		}
