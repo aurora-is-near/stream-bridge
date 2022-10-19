@@ -34,20 +34,18 @@
     "MaxRps": 2,
     "BufferSize": 1000,
     "MaxRequestBatchSize": 250,
-    "SubscribeAckWaitMs": 5000,
-    "InactiveThresholdSeconds": 300,
     "FetchTimeoutMs": 10000,
-    "SortBatch": true,
     "LastSeqUpdateIntervalSeconds": 5,
     "Durable": "myconsumer",
     "StrictStart": false,
-    "WrongSeqToleranceWindow": 50
+    "MaxSilenceSeconds": 10
   },
   "Writer": {
     "PublishAckWaitMs": 5000,
     "MaxWriteAttempts": 3,
     "WriteRetryWaitMs": 1000,
-    "TipTtlSeconds": 60
+    "TipTtlSeconds": 60,
+    "DisableExpectedCheck": 0
   },
   "InputStartSequence": 0,
   "InputEndSequenece": 0,
