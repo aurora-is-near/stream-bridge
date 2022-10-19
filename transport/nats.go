@@ -15,6 +15,7 @@ type NatsConnectionConfig struct {
 	PingIntervalMs      uint
 	MaxPingsOutstanding int
 	LogTag              string
+	Name                string `json:"-"`
 }
 
 type NatsConnection struct {
@@ -37,6 +38,9 @@ func (cfg NatsConnectionConfig) FillMissingFields() *NatsConnectionConfig {
 	if len(cfg.LogTag) == 0 {
 		cfg.LogTag = "unnamed"
 	}
+	if len(cfg.Name) == 0 {
+		cfg.Name = "unnamed"
+	}
 	return &cfg
 }
 
@@ -54,7 +58,7 @@ func ConnectNATS(cfg *NatsConnectionConfig, errorChan chan<- error) (*NatsConnec
 	}
 
 	options := []nats.Option{
-		nats.Name("nats2relayer"),
+		nats.Name(cfg.Name),
 		nats.ReconnectWait(time.Second / 5),
 		nats.PingInterval(time.Duration(cfg.PingIntervalMs) * time.Millisecond),
 		nats.RetryOnFailedConnect(true),

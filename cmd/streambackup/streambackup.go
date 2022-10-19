@@ -60,6 +60,7 @@ func main() {
 					Endpoints: []string{*server},
 					Creds:     *creds,
 					LogTag:    "backup",
+					Name:      "streambackup",
 				},
 				Stream: *streamName,
 			},

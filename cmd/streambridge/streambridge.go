@@ -99,6 +99,8 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "Error parsing config file: %s\n", err)
 		os.Exit(1)
 	}
+	config.Input.Nats.Name = "streambridge"
+	config.Output.Nats.Name = "streambridge"
 	if err := config.Run(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
