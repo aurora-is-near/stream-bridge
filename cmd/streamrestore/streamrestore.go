@@ -15,15 +15,17 @@ import (
 )
 
 var (
-	server     = flag.String("server", "", "NATS server URL")
-	creds      = flag.String("creds", "", "path to NATS credentials file")
-	streamName = flag.String("stream", "", "output stream name")
-	seqStart   = flag.Uint64("seq-start", 1, "start sequence on stream")
-	seqEnd     = flag.Uint64("seq-end", 99999999999, "end sequence on stream")
-	mode       = flag.String("mode", "unverified", "must be one of ['unverified', 'aurora', 'near']")
-	dir        = flag.String("dir", "backup", "output dir")
-	backup     = flag.String("backup", "", "(chunks prefix before underscore)")
-	tolerance  = flag.Uint("tolerance", 1000, "tolerance window (how many consequent wrong blocks can be ignored)")
+	server         = flag.String("server", "", "NATS server URL")
+	creds          = flag.String("creds", "", "path to NATS credentials file")
+	streamName     = flag.String("stream", "", "output stream name")
+	seqStart       = flag.Uint64("seq-start", 1, "start sequence on stream")
+	seqEnd         = flag.Uint64("seq-end", 99999999999, "end sequence on stream")
+	mode           = flag.String("mode", "unverified", "must be one of ['unverified', 'aurora', 'near']")
+	dir            = flag.String("dir", "backup", "output dir")
+	backup         = flag.String("backup", "", "(chunks prefix before underscore)")
+	tolerance      = flag.Uint("tolerance", 1000, "tolerance window (how many consequent wrong blocks can be ignored)")
+	noExpectHeight = flag.Uint64("no-expect-height", 0, "don't set expect-last-<...> headers on this height")
+	noExpectSeq    = flag.Uint64("no-expect-sequence", 0, "don't set expect-last-<...> headers on this sequence")
 )
 
 func main() {
@@ -55,11 +57,12 @@ func main() {
 			Stream: *streamName,
 		},
 		Writer: &blockwriter.Opts{
-			PublishAckWaitMs:     10_000,
-			MaxWriteAttempts:     3,
-			WriteRetryWaitMs:     3_000,
-			TipTtlSeconds:        15,
-			DisableExpectedCheck: 0,
+			PublishAckWaitMs:           10_000,
+			MaxWriteAttempts:           3,
+			WriteRetryWaitMs:           3_000,
+			TipTtlSeconds:              15,
+			DisableExpectedCheck:       *noExpectSeq,
+			DisableExpectedCheckHeight: *noExpectHeight,
 		},
 		StartSeq:        *seqStart,
 		EndSeq:          *seqEnd,
