@@ -3,27 +3,27 @@ package stream
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sort"
 	"time"
 
-	"github.com/aurora-is-near/stream-bridge/util"
 	"github.com/nats-io/nats.go"
 )
 
-const readerMinRps = 0.1
-const minPushSubLifetime = time.Minute
-
-var errStopped = errors.New("stopped")
+const readerMinRps = 0.001
 
 type ReaderOpts struct {
 	MaxRps                       float64
 	BufferSize                   uint
 	MaxRequestBatchSize          uint
+	SubscribeAckWaitMs           uint
+	InactiveThresholdSeconds     uint
 	FetchTimeoutMs               uint
+	SortBatch                    bool
 	LastSeqUpdateIntervalSeconds uint
 	Durable                      string
 	StrictStart                  bool
-	MaxSilenceSeconds            uint
+	WrongSeqToleranceWindow      uint
 }
 
 type ReaderOutput struct {
@@ -38,20 +38,10 @@ type Reader struct {
 	startSeq uint64
 	endSeq   uint64
 
-	pullTick              time.Duration
-	fetchTimeout          time.Duration
-	lastSeqUpdateInterval time.Duration
-	maxSilence            time.Duration
-
-	stopper *util.Stopper
+	stop    chan bool
+	stopped chan bool
 	output  chan *ReaderOutput
-
-	pullSub    *nats.Subscription
-	pullTicker *time.Ticker
-
-	pushSub     *nats.Subscription
-	pushChan    chan *nats.Msg
-	pushSubTime time.Time
+	sub     *nats.Subscription
 }
 
 func (opts ReaderOpts) FillMissingFields() *ReaderOpts {
@@ -61,14 +51,17 @@ func (opts ReaderOpts) FillMissingFields() *ReaderOpts {
 	if opts.MaxRequestBatchSize == 0 {
 		opts.MaxRequestBatchSize = 100
 	}
+	if opts.SubscribeAckWaitMs == 0 {
+		opts.SubscribeAckWaitMs = 5000
+	}
+	if opts.InactiveThresholdSeconds == 0 {
+		opts.InactiveThresholdSeconds = 300
+	}
 	if opts.FetchTimeoutMs == 0 {
 		opts.FetchTimeoutMs = 10000
 	}
 	if opts.LastSeqUpdateIntervalSeconds == 0 {
 		opts.LastSeqUpdateIntervalSeconds = 5
-	}
-	if opts.MaxSilenceSeconds == 0 {
-		opts.MaxSilenceSeconds = 10
 	}
 	return &opts
 }
@@ -76,23 +69,42 @@ func (opts ReaderOpts) FillMissingFields() *ReaderOpts {
 func StartReader(opts *ReaderOpts, stream *Stream, startSeq uint64, endSeq uint64) (*Reader, error) {
 	opts = opts.FillMissingFields()
 
+	if startSeq < 1 {
+		startSeq = 1
+	}
 	r := &Reader{
 		opts:     opts,
 		stream:   stream,
-		startSeq: util.Max(startSeq, 1),
+		startSeq: startSeq,
 		endSeq:   endSeq,
-
-		pullTick:              time.Duration(float64(time.Second) / opts.MaxRps),
-		fetchTimeout:          time.Duration(opts.FetchTimeoutMs) * time.Millisecond,
-		lastSeqUpdateInterval: time.Duration(opts.LastSeqUpdateIntervalSeconds) * time.Second,
-		maxSilence:            time.Duration(opts.MaxSilenceSeconds) * time.Second,
-
-		stopper: util.NewStopper(),
-		output:  make(chan *ReaderOutput, opts.BufferSize),
+		stop:     make(chan bool),
+		stopped:  make(chan bool),
+		output:   make(chan *ReaderOutput, opts.BufferSize),
 	}
 
-	r.log("running...")
-	r.stopper.Add(1)
+	log.Printf("Stream Reader [%v]: making sure that previous consumer is deleted...", stream.opts.Nats.LogTag)
+	err := stream.js.DeleteConsumer(stream.opts.Stream, opts.Durable)
+	if err != nil && err != nats.ErrConsumerNotFound {
+		log.Printf("Stream Reader [%v]: can't delete previous consumer: %v", stream.opts.Nats.LogTag, err)
+	}
+
+	log.Printf("Stream Reader [%v]: subscribing...", stream.opts.Nats.LogTag)
+	r.sub, err = stream.js.PullSubscribe(
+		stream.opts.Subject,
+		opts.Durable,
+		nats.BindStream(stream.opts.Stream),
+		//nats.OrderedConsumer(),
+		nats.StartSequence(startSeq),
+		nats.InactiveThreshold(time.Second*time.Duration(opts.InactiveThresholdSeconds)),
+	)
+	if err != nil {
+		log.Printf("Stream Reader [%v]: unable to subscribe: %v", stream.opts.Nats.LogTag, err)
+		return nil, err
+	}
+
+	log.Printf("Stream Reader [%v]: subscribed", stream.opts.Nats.LogTag)
+
+	log.Printf("Stream Reader [%v]: running...", stream.opts.Nats.LogTag)
 	go r.run()
 
 	return r, nil
@@ -103,304 +115,174 @@ func (r *Reader) Output() <-chan *ReaderOutput {
 }
 
 func (r *Reader) Stop() {
-	r.log("stopping...")
-	r.stopper.Stop()
+	log.Printf("Stream Reader [%v]: stopping...", r.stream.opts.Nats.LogTag)
+	for {
+		select {
+		case r.stop <- true:
+		case <-r.stopped:
+			return
+		}
+	}
 }
 
 func (r *Reader) run() {
-	defer r.stopper.Done()
-	defer close(r.output)
-	defer func() {
-		if r.pullSub != nil {
-			r.pullUnsubscribe()
-		}
-		if r.pushSub != nil {
-			r.pushUnsubscribe()
-		}
-	}()
+	if r.endSeq > 0 && r.startSeq >= r.endSeq {
+		r.finish("finished (r.startSeq >= r.endSeq)", nil)
+		return
+	}
 
-	silence := false
-	var silenceStart time.Time
+	curSeq := r.startSeq - 1
+	lastSeq, err := r.getLastSeq()
+	if err != nil {
+		r.finish("unable to fetch LastSeq", err)
+		return
+	}
 
-	nextSeq := r.startSeq
+	requestTicker := time.NewTicker(time.Duration(float64(time.Second) / r.opts.MaxRps))
+	defer requestTicker.Stop()
+
+	fetchWait := nats.MaxWait(time.Millisecond * time.Duration(r.opts.FetchTimeoutMs))
+
 	first := true
+	consecutiveWrongSeqCount := 0
 	for {
-		if r.endSeq > 0 && nextSeq >= r.endSeq {
-			r.log("finished")
+		// Prioritized stop check
+		select {
+		case <-r.stop:
+			r.finish("stopped", nil)
 			return
+		default:
 		}
 
-		if r.stopper.IsStopped() {
-			r.log("stopped")
+		select {
+		case <-r.stop:
+			r.finish("stopped", nil)
 			return
-		}
-
-		numUsefulPending, err := r.countNumUsefulPending(nextSeq)
-		if err != nil {
-			r.sendErr(fmt.Errorf("unable to count useful pending: %w", err))
-			return
-		}
-
-		batch, err := r.readNext(nextSeq, numUsefulPending)
-		if err == errStopped {
-			r.log("stopped")
-			return
-		}
-		if err != nil {
-			r.sendErr(fmt.Errorf("unable to obtain next message: %w", err))
-			return
-		}
-
-		parsedBatch := make([]*ReaderOutput, len(batch))
-		for i, msg := range batch {
-			meta, err := msg.Metadata()
-			if err != nil {
-				r.sendErr(fmt.Errorf("unable to parse message metadata: %w", err))
-				return
-			}
-			parsedBatch[i] = &ReaderOutput{
-				Msg:      msg,
-				Metadata: meta,
-			}
-		}
-		sort.Slice(parsedBatch, func(i, j int) bool {
-			return parsedBatch[i].Metadata.Sequence.Stream < parsedBatch[j].Metadata.Sequence.Stream
-		})
-
-		filteredBatch := []*ReaderOutput{}
-		for _, item := range parsedBatch {
-			if (!first || r.opts.StrictStart) && item.Metadata.Sequence.Stream != nextSeq {
-				continue
-			}
-			if err := item.Msg.Ack(); err != nil {
-				r.log("unable to ack message [seq=%d] (will ignore): %v", nextSeq, err)
-			}
-			first = false
-			if r.endSeq == 0 || nextSeq < r.endSeq {
-				filteredBatch = append(filteredBatch, item)
-			}
-			nextSeq++
-		}
-
-		if len(filteredBatch) == 0 && numUsefulPending > 0 {
-			if silence {
-				if time.Since(silenceStart) > r.maxSilence {
-					r.sendErr(fmt.Errorf("max silence exceeded"))
+		case <-requestTicker.C:
+			batchSize := r.countBatchSize(curSeq, lastSeq)
+			if batchSize < r.opts.MaxRequestBatchSize {
+				lastSeq, err = r.getLastSeq()
+				if err != nil {
+					r.finish("unable to fetch LastSeq", err)
 					return
 				}
-			} else {
-				silence = true
-				silenceStart = time.Now()
+				batchSize = r.countBatchSize(curSeq, lastSeq)
 			}
-		} else {
-			silence = false
-		}
 
-		for _, item := range filteredBatch {
-			if r.stopper.IsStopped() {
-				r.log("stopped")
+			messages, err := r.sub.Fetch(int(batchSize), fetchWait)
+			if err != nil {
+				if curSeq >= lastSeq {
+					continue
+				}
+				r.finish(fmt.Sprintf("unable to fetch messages (batchSize=%d)", batchSize), err)
 				return
 			}
-			select {
-			case <-r.stopper.Stopped():
-				r.log("stopped")
-				return
-			case r.output <- item:
+
+			result := make([]*ReaderOutput, 0, len(messages))
+			for _, msg := range messages {
+				if err := msg.Ack(); err != nil {
+					log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.opts.Nats.LogTag, err)
+				}
+				meta, err := msg.Metadata()
+				if err != nil {
+					r.finish("unable to parse message metadata", err)
+					return
+				}
+				result = append(result, &ReaderOutput{
+					Msg:      msg,
+					Metadata: meta,
+				})
+			}
+
+			if r.opts.SortBatch {
+				sort.Slice(result, func(i, j int) bool {
+					return result[i].Metadata.Sequence.Stream < result[j].Metadata.Sequence.Stream
+				})
+			}
+
+			for _, res := range result {
+				if (!first || r.opts.StrictStart) && res.Metadata.Sequence.Stream != curSeq+1 {
+					log.Printf(
+						"Stream Reader [%v]: wrong sequence detected: %v, expected %v",
+						r.stream.opts.Nats.LogTag,
+						res.Metadata.Sequence.Stream,
+						curSeq+1,
+					)
+					consecutiveWrongSeqCount++
+					if consecutiveWrongSeqCount >= int(r.opts.WrongSeqToleranceWindow) {
+						r.finish("error", errors.New("WrongSeqToleranceWindow exceeded"))
+						return
+					}
+					continue
+				}
+				curSeq = res.Metadata.Sequence.Stream
+				consecutiveWrongSeqCount = 0
+				first = false
+
+				if r.endSeq > 0 && res.Metadata.Sequence.Stream >= r.endSeq {
+					r.finish("finished", nil)
+					return
+				}
+
+				// Prioritized stop check
+				select {
+				case <-r.stop:
+					r.finish("stopped", nil)
+					return
+				default:
+				}
+
+				select {
+				case <-r.stop:
+					r.finish("stopped", nil)
+					return
+				case r.output <- res:
+				}
+
+				if r.endSeq > 0 && res.Metadata.Sequence.Stream == r.endSeq-1 {
+					r.finish("finished", nil)
+					return
+				}
 			}
 		}
 	}
 }
 
-func (r *Reader) readNext(nextSeq uint64, numUsefulPending uint64) ([]*nats.Msg, error) {
-	if r.stopper.IsStopped() {
-		return nil, errStopped
+func (r *Reader) countBatchSize(curSeq uint64, lastSeq uint64) uint {
+	border := lastSeq
+	if r.endSeq != 0 && r.endSeq-1 < border {
+		border = r.endSeq - 1
 	}
-
-	enoughForBatch := numUsefulPending >= uint64(r.opts.MaxRequestBatchSize)
-	pushSubLock := r.pushSub != nil && time.Since(r.pushSubTime) < minPushSubLifetime
-	if r.pullSub == nil && enoughForBatch && !pushSubLock {
-		if r.pushSub != nil {
-			r.pushUnsubscribe()
-		}
-		if err := r.pullSubscribe(nextSeq); err != nil {
-			return nil, err
-		}
+	if curSeq >= border {
+		return 1
 	}
-	if r.pushSub == nil && !enoughForBatch {
-		if r.pullSub != nil {
-			r.pullUnsubscribe()
-		}
-		if err := r.pushSubscribe(nextSeq); err != nil {
-			return nil, err
-		}
+	residue := border - curSeq
+	if residue > uint64(r.opts.MaxRequestBatchSize) {
+		return r.opts.MaxRequestBatchSize
 	}
-
-	if r.stopper.IsStopped() {
-		return nil, errStopped
-	}
-
-	if r.pullSub != nil {
-		return r.readPull(numUsefulPending)
-	} else {
-		return r.readPush(numUsefulPending)
-	}
-}
-
-func (r *Reader) readPull(numUsefulPending uint64) ([]*nats.Msg, error) {
-	batchSize := int(util.Max(util.Min(numUsefulPending, uint64(r.opts.MaxRequestBatchSize)), 1))
-	select {
-	case <-r.stopper.Stopped():
-		return nil, errStopped
-	case <-r.pullTicker.C:
-	}
-	if r.stopper.IsStopped() {
-		return nil, errStopped
-	}
-	batch, err := r.pullSub.Fetch(batchSize, nats.MaxWait(r.fetchTimeout))
-	if err != nil && numUsefulPending == 0 {
-		return []*nats.Msg{}, nil
-	}
-	return batch, err
-}
-
-func (r *Reader) readPush(numUsefulPending uint64) ([]*nats.Msg, error) {
-	timeoutTimer := time.NewTimer(r.fetchTimeout)
-	defer timeoutTimer.Stop()
-	batch := make([]*nats.Msg, 1)
-	select {
-	case <-r.stopper.Stopped():
-		return nil, errStopped
-	case <-timeoutTimer.C:
-		if numUsefulPending == 0 {
-			return []*nats.Msg{}, nil
-		}
-		return nil, fmt.Errorf("push reader timeout")
-	case batch[0] = <-r.pushChan:
-	}
-
-	for i := 1; i < int(r.opts.MaxRequestBatchSize); i++ {
-		if r.stopper.IsStopped() {
-			return nil, errStopped
-		}
-		var msg *nats.Msg
-		select {
-		case msg = <-r.pushChan:
-			batch = append(batch, msg)
-		default:
-			return batch, nil
-		}
-	}
-	return batch, nil
-}
-
-func (r *Reader) deleteConsumer() error {
-	r.log("making sure that previous consumer is deleted...")
-	err := r.stream.js.DeleteConsumer(r.stream.opts.Stream, r.opts.Durable)
-	if err != nil && err != nats.ErrConsumerNotFound {
-		return fmt.Errorf("can't delete previous consumer: %w", err)
-	}
-	return nil
-}
-
-func (r *Reader) pullSubscribe(startSeq uint64) error {
-	r.log("pull-subscribing...")
-	err := r.deleteConsumer()
-	if err != nil {
-		return fmt.Errorf("unable to pull-subscribe: %w", err)
-	}
-	r.log("sending pull-subscribe request [startSeq=%v]...", startSeq)
-	r.pullSub, err = r.stream.js.PullSubscribe(
-		r.stream.opts.Subject,
-		r.opts.Durable,
-		nats.BindStream(r.stream.opts.Stream),
-		nats.StartSequence(startSeq),
-	)
-	if err != nil {
-		return fmt.Errorf("unable to pull-subscribe: %w", err)
-	}
-	r.pullTicker = time.NewTicker(r.pullTick)
-	r.log("pull-subscribed")
-	return nil
-}
-
-func (r *Reader) pullUnsubscribe() {
-	r.log("pull-unsubscribing...")
-	if err := r.pullSub.Unsubscribe(); err != nil {
-		r.log("unable to pull-unsubscribe (will ignore): %v", err)
-	} else {
-		r.log("pull-unsubscribed")
-	}
-	r.pullSub = nil
-	r.pullTicker.Stop()
-	r.pullTicker = nil
-}
-
-func (r *Reader) pushSubscribe(startSeq uint64) error {
-	r.log("push-subscribing...")
-	err := r.deleteConsumer()
-	if err != nil {
-		return fmt.Errorf("unable to push-subscribe: %w", err)
-	}
-	r.pushChan = make(chan *nats.Msg, r.opts.MaxRequestBatchSize)
-	r.log("sending push-subscribe request [startSeq=%v]...", startSeq)
-	r.pushSub, err = r.stream.js.ChanSubscribe(
-		r.stream.opts.Subject,
-		r.pushChan,
-		nats.BindStream(r.stream.opts.Stream),
-		nats.Durable(r.opts.Durable),
-		nats.StartSequence(startSeq),
-		nats.ManualAck(),
-		nats.AckExplicit(),
-	)
-	if err != nil {
-		return fmt.Errorf("unable to push-subscribe: %w", err)
-	}
-	r.pushSubTime = time.Now()
-	r.log("push-subscribed")
-	return nil
-}
-
-func (r *Reader) pushUnsubscribe() {
-	r.log("push-unsubscribing...")
-	if err := r.pushSub.Unsubscribe(); err != nil {
-		r.log("unable to push-unsubscribe (will ignore): %v", err)
-	} else {
-		r.log("push-unsubscribed")
-	}
-	r.pushSub = nil
-	r.pushChan = nil
+	return uint(residue)
 }
 
 func (r *Reader) getLastSeq() (uint64, error) {
-	info, _, err := r.stream.GetInfo(r.lastSeqUpdateInterval)
+	info, _, err := r.stream.GetInfo(time.Second * time.Duration(r.opts.LastSeqUpdateIntervalSeconds))
 	if err != nil {
 		return 0, err
 	}
 	return info.State.LastSeq, nil
 }
 
-func (r *Reader) countNumUsefulPending(nextExpectedSeq uint64) (uint64, error) {
-	border, err := r.getLastSeq()
+func (r *Reader) finish(logMsg string, err error) {
+	log.Printf("Stream Reader [%v]: %v: %v", r.stream.opts.Nats.LogTag, logMsg, err)
 	if err != nil {
-		return 0, fmt.Errorf("unable to fetch LastSeq: %w", err)
+		out := &ReaderOutput{
+			Error: err,
+		}
+		select {
+		case <-r.stop:
+		case r.output <- out:
+		}
 	}
-	if r.endSeq > 0 && r.endSeq-1 < border {
-		border = r.endSeq - 1
-	}
-	if border > nextExpectedSeq {
-		return border - nextExpectedSeq, nil
-	}
-	return 0, nil
-}
-
-func (r *Reader) sendErr(err error) {
-	r.log("%v", err)
-	select {
-	case <-r.stopper.Stopped():
-	case r.output <- &ReaderOutput{Error: err}:
-	}
-}
-
-func (r *Reader) log(format string, v ...any) {
-	r.stream.log(fmt.Sprintf("reader [%s]: ", r.opts.Durable)+format, v...)
+	close(r.output)
+	r.sub.Unsubscribe()
+	close(r.stopped)
 }
