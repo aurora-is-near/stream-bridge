@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aurora-is-near/stream-backup/chunks"
+	"github.com/aurora-is-near/stream-backup/messagebackup"
 	"github.com/aurora-is-near/stream-bridge/stream"
-	"github.com/aurora-is-near/stream-bridge/streambackup/chunks"
-	"github.com/aurora-is-near/stream-bridge/streambackup/messagebackup"
 	"github.com/aurora-is-near/stream-bridge/types"
 )
 

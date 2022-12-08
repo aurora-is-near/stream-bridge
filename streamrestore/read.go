@@ -5,8 +5,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/aurora-is-near/stream-bridge/streambackup/chunks"
-	"github.com/aurora-is-near/stream-bridge/streambackup/messagebackup"
+	"github.com/aurora-is-near/stream-backup/chunks"
+	"github.com/aurora-is-near/stream-backup/messagebackup"
 	"github.com/aurora-is-near/stream-bridge/types"
 	"github.com/nats-io/nats.go"
 )

@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aurora-is-near/stream-backup/chunks"
 	"github.com/aurora-is-near/stream-bridge/stream"
 	"github.com/aurora-is-near/stream-bridge/streambackup"
-	"github.com/aurora-is-near/stream-bridge/streambackup/chunks"
 	"github.com/aurora-is-near/stream-bridge/transport"
 )
 
