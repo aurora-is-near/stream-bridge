@@ -9,6 +9,7 @@ import (
 	"github.com/aurora-is-near/stream-backup/messagebackup"
 	"github.com/aurora-is-near/stream-bridge/types"
 	"github.com/nats-io/nats.go"
+	"google.golang.org/protobuf/proto"
 )
 
 type blockBackup struct {
@@ -99,7 +100,7 @@ func (sr *StreamRestore) parseBlockBackup(sequence uint64, data []byte) (*blockB
 		sequence:      sequence,
 		messageBackup: &messagebackup.MessageBackup{},
 	}
-	err := bb.messageBackup.Unmarshal(data)
+	err := proto.Unmarshal(data, bb.messageBackup)
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal message backup (seq=%v): %w", sequence, err)
 	}

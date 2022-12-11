@@ -13,6 +13,7 @@ import (
 	"github.com/aurora-is-near/stream-backup/messagebackup"
 	"github.com/aurora-is-near/stream-bridge/stream"
 	"github.com/aurora-is-near/stream-bridge/types"
+	"google.golang.org/protobuf/proto"
 )
 
 const stdoutInterval = time.Second * 5
@@ -83,7 +84,7 @@ func (sb *StreamBackup) pullSegment(l, r uint64) error {
 			return fmt.Errorf("prev != l - 1")
 		}
 		mb := &messagebackup.MessageBackup{}
-		if err := mb.Unmarshal(prevData); err != nil {
+		if err := proto.Unmarshal(prevData, mb); err != nil {
 			return fmt.Errorf("can't unmarshal prev block: %w", err)
 		}
 		prevBlock, err = sb.decodeBlock(mb.Data)
@@ -131,7 +132,7 @@ func (sb *StreamBackup) pullSegment(l, r uint64) error {
 			for header, values := range cur.Msg.Header {
 				mb.Headers[header] = &messagebackup.HeaderValues{Values: values}
 			}
-			data, err := mb.Marshal()
+			data, err := proto.Marshal(mb)
 			if err != nil {
 				return fmt.Errorf("can't marshal new block on seq %v: %w", cur.Metadata.Sequence.Stream, err)
 			}
