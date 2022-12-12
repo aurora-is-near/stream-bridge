@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aurora-is-near/aurora-relayer-sqlblock v0.1.3
 	github.com/aurora-is-near/borealis.go v0.1.7
-	github.com/aurora-is-near/stream-backup v0.0.0-20221211233051-deec130da50e
+	github.com/aurora-is-near/stream-backup v0.0.0-20221212013533-1e06e263c3f7
 	github.com/buger/jsonparser v1.1.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fxamacker/cbor/v2 v2.4.0
@@ -14,7 +14,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.15
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/client_model v0.2.0
-	google.golang.org/protobuf v1.28.1
 )
 
 require (
@@ -40,5 +39,6 @@ require (
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
