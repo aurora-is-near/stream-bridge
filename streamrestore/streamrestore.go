@@ -26,7 +26,7 @@ var errStartNotFound = errors.New("start not found")
 
 type StreamRestore struct {
 	Mode            string
-	Chunks          *chunks.Chunks
+	Chunks          chunks.ChunksInterface
 	Stream          *stream.Opts
 	Writer          *blockwriter.Opts
 	StartSeq        uint64

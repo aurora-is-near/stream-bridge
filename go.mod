@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aurora-is-near/aurora-relayer-sqlblock v0.1.3
 	github.com/aurora-is-near/borealis.go v0.1.7
-	github.com/aurora-is-near/stream-backup v0.0.0-20221212013533-1e06e263c3f7
+	github.com/aurora-is-near/stream-backup v0.0.0-20230116080553-82b7cd616f04
 	github.com/buger/jsonparser v1.1.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fxamacker/cbor/v2 v2.4.0
