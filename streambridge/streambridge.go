@@ -99,8 +99,8 @@ func (sb *StreamBridge) Run() error {
 }
 
 func (sb *StreamBridge) loop(ctx context.Context) error {
-	var input stream.StreamInterface
-	var output stream.StreamInterface
+	var input stream.StreamWrapperInterface
+	var output stream.StreamWrapperInterface
 
 	defer func() {
 		if input != nil {
@@ -158,7 +158,7 @@ func (sb *StreamBridge) loop(ctx context.Context) error {
 	}
 }
 
-func (sb *StreamBridge) sync(ctx context.Context, input, output stream.StreamInterface) error {
+func (sb *StreamBridge) sync(ctx context.Context, input, output stream.StreamWrapperInterface) error {
 	if ctx.Err() != nil {
 		return errCanceled
 	}
@@ -273,7 +273,7 @@ func (sb *StreamBridge) sync(ctx context.Context, input, output stream.StreamInt
 	}
 }
 
-func (sb *StreamBridge) calculateStartSeq(ctx context.Context, input stream.StreamInterface, lastOutputBlock *types.AbstractBlock) (uint64, error) {
+func (sb *StreamBridge) calculateStartSeq(ctx context.Context, input stream.StreamWrapperInterface, lastOutputBlock *types.AbstractBlock) (uint64, error) {
 	log.Printf("Figuring out the best input seq to start from...")
 
 	if ctx.Err() != nil {
@@ -363,7 +363,7 @@ func (sb *StreamBridge) calculateStartSeq(ctx context.Context, input stream.Stre
 	return cur, nil
 }
 
-func (sb *StreamBridge) getBlock(stream stream.StreamInterface, seq uint64) (block *types.AbstractBlock, corrupted bool, err error) {
+func (sb *StreamBridge) getBlock(stream stream.StreamWrapperInterface, seq uint64) (block *types.AbstractBlock, corrupted bool, err error) {
 	msg, err := stream.Get(seq)
 	if err != nil {
 		log.Printf("Unable to fetch block (seq=%d): %v", seq, err)

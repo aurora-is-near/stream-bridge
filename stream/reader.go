@@ -34,7 +34,7 @@ type ReaderOutput struct {
 
 type Reader struct {
 	opts     *ReaderOpts
-	stream   StreamInterface
+	stream   StreamWrapperInterface
 	startSeq uint64
 	endSeq   uint64
 
@@ -66,7 +66,7 @@ func (opts ReaderOpts) FillMissingFields() *ReaderOpts {
 	return &opts
 }
 
-func StartReader(opts *ReaderOpts, stream StreamInterface, startSeq uint64, endSeq uint64) (*Reader, error) {
+func StartReader(opts *ReaderOpts, stream StreamWrapperInterface, startSeq uint64, endSeq uint64) (*Reader, error) {
 	opts = opts.FillMissingFields()
 
 	if startSeq < 1 {
