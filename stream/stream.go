@@ -36,7 +36,16 @@ func (opts Opts) FillMissingFields() *Opts {
 	return &opts
 }
 
-func ConnectStream(opts *Opts) (*Stream, error) {
+type StreamInterface interface {
+	Disconnect() error
+	GetInfo(ttl time.Duration) (*nats.StreamInfo, time.Time, error)
+	Get(seq uint64) (*nats.RawStreamMsg, error)
+	Write(data []byte, header nats.Header, publishAckWait nats.AckWait) (*nats.PubAck, error)
+	log(format string, v ...any)
+	Stats() *nats.Statistics
+}
+
+func ConnectStream(opts *Opts) (StreamInterface, error) {
 	opts = opts.FillMissingFields()
 	s := &Stream{
 		opts:        opts,
@@ -95,7 +104,7 @@ func ConnectStream(opts *Opts) (*Stream, error) {
 
 	s.log("connected")
 
-	return s, nil
+	return &*s, nil
 }
 
 func (s *Stream) Disconnect() error {
