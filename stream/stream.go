@@ -37,12 +37,17 @@ func (opts Opts) FillMissingFields() *Opts {
 }
 
 type StreamInterface interface {
+	GetStream() Stream
 	Disconnect() error
 	GetInfo(ttl time.Duration) (*nats.StreamInfo, time.Time, error)
 	Get(seq uint64) (*nats.RawStreamMsg, error)
 	Write(data []byte, header nats.Header, publishAckWait nats.AckWait) (*nats.PubAck, error)
 	log(format string, v ...any)
 	Stats() *nats.Statistics
+}
+
+func (s *Stream) GetStream() Stream {
+	return *s
 }
 
 func ConnectStream(opts *Opts) (StreamInterface, error) {

@@ -34,7 +34,7 @@ type ReaderOutput struct {
 
 type Reader struct {
 	opts     *ReaderOpts
-	stream   *Stream
+	stream   StreamInterface
 	startSeq uint64
 	endSeq   uint64
 
@@ -66,7 +66,7 @@ func (opts ReaderOpts) FillMissingFields() *ReaderOpts {
 	return &opts
 }
 
-func StartReader(opts *ReaderOpts, stream *Stream, startSeq uint64, endSeq uint64) (*Reader, error) {
+func StartReader(opts *ReaderOpts, stream StreamInterface, startSeq uint64, endSeq uint64) (*Reader, error) {
 	opts = opts.FillMissingFields()
 
 	if startSeq < 1 {
@@ -82,29 +82,29 @@ func StartReader(opts *ReaderOpts, stream *Stream, startSeq uint64, endSeq uint6
 		output:   make(chan *ReaderOutput, opts.BufferSize),
 	}
 
-	log.Printf("Stream Reader [%v]: making sure that previous consumer is deleted...", stream.opts.Nats.LogTag)
-	err := stream.js.DeleteConsumer(stream.opts.Stream, opts.Durable)
+	log.Printf("Stream Reader [%v]: making sure that previous consumer is deleted...", stream.GetStream().opts.Nats.LogTag)
+	err := stream.GetStream().js.DeleteConsumer(stream.GetStream().opts.Stream, opts.Durable)
 	if err != nil && err != nats.ErrConsumerNotFound {
-		log.Printf("Stream Reader [%v]: can't delete previous consumer: %v", stream.opts.Nats.LogTag, err)
+		log.Printf("Stream Reader [%v]: can't delete previous consumer: %v", stream.GetStream().opts.Nats.LogTag, err)
 	}
 
-	log.Printf("Stream Reader [%v]: subscribing...", stream.opts.Nats.LogTag)
-	r.sub, err = stream.js.PullSubscribe(
-		stream.opts.Subject,
+	log.Printf("Stream Reader [%v]: subscribing...", stream.GetStream().opts.Nats.LogTag)
+	r.sub, err = stream.GetStream().js.PullSubscribe(
+		stream.GetStream().opts.Subject,
 		opts.Durable,
-		nats.BindStream(stream.opts.Stream),
+		nats.BindStream(stream.GetStream().opts.Stream),
 		//nats.OrderedConsumer(),
 		nats.StartSequence(startSeq),
 		nats.InactiveThreshold(time.Second*time.Duration(opts.InactiveThresholdSeconds)),
 	)
 	if err != nil {
-		log.Printf("Stream Reader [%v]: unable to subscribe: %v", stream.opts.Nats.LogTag, err)
+		log.Printf("Stream Reader [%v]: unable to subscribe: %v", stream.GetStream().opts.Nats.LogTag, err)
 		return nil, err
 	}
 
-	log.Printf("Stream Reader [%v]: subscribed", stream.opts.Nats.LogTag)
+	log.Printf("Stream Reader [%v]: subscribed", stream.GetStream().opts.Nats.LogTag)
 
-	log.Printf("Stream Reader [%v]: running...", stream.opts.Nats.LogTag)
+	log.Printf("Stream Reader [%v]: running...", stream.GetStream().opts.Nats.LogTag)
 	go r.run()
 
 	return r, nil
@@ -115,7 +115,7 @@ func (r *Reader) Output() <-chan *ReaderOutput {
 }
 
 func (r *Reader) Stop() {
-	log.Printf("Stream Reader [%v]: stopping...", r.stream.opts.Nats.LogTag)
+	log.Printf("Stream Reader [%v]: stopping...", r.stream.GetStream().opts.Nats.LogTag)
 	for {
 		select {
 		case r.stop <- true:
@@ -181,7 +181,7 @@ func (r *Reader) run() {
 			result := make([]*ReaderOutput, 0, len(messages))
 			for _, msg := range messages {
 				if err := msg.Ack(); err != nil {
-					log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.opts.Nats.LogTag, err)
+					log.Printf("Stream Reader [%v]: can't ack message: %v", r.stream.GetStream().opts.Nats.LogTag, err)
 				}
 				meta, err := msg.Metadata()
 				if err != nil {
@@ -204,7 +204,7 @@ func (r *Reader) run() {
 				if (!first || r.opts.StrictStart) && res.Metadata.Sequence.Stream != curSeq+1 {
 					log.Printf(
 						"Stream Reader [%v]: wrong sequence detected: %v, expected %v",
-						r.stream.opts.Nats.LogTag,
+						r.stream.GetStream().opts.Nats.LogTag,
 						res.Metadata.Sequence.Stream,
 						curSeq+1,
 					)
@@ -272,7 +272,7 @@ func (r *Reader) getLastSeq() (uint64, error) {
 }
 
 func (r *Reader) finish(logMsg string, err error) {
-	log.Printf("Stream Reader [%v]: %v: %v", r.stream.opts.Nats.LogTag, logMsg, err)
+	log.Printf("Stream Reader [%v]: %v: %v", r.stream.GetStream().opts.Nats.LogTag, logMsg, err)
 	if err != nil {
 		out := &ReaderOutput{
 			Error: err,
