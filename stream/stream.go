@@ -36,7 +36,21 @@ func (opts Opts) FillMissingFields() *Opts {
 	return &opts
 }
 
-func ConnectStream(opts *Opts) (*Stream, error) {
+type StreamWrapperInterface interface {
+	GetStream() *Stream
+	Disconnect() error
+	GetInfo(ttl time.Duration) (*nats.StreamInfo, time.Time, error)
+	Get(seq uint64) (*nats.RawStreamMsg, error)
+	Write(data []byte, header nats.Header, publishAckWait nats.AckWait) (*nats.PubAck, error)
+	log(format string, v ...any)
+	Stats() *nats.Statistics
+}
+
+func (s *Stream) GetStream() *Stream {
+	return s
+}
+
+func ConnectStream(opts *Opts) (StreamWrapperInterface, error) {
 	opts = opts.FillMissingFields()
 	s := &Stream{
 		opts:        opts,

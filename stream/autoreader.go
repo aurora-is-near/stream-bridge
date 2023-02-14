@@ -36,7 +36,7 @@ func (sw *AutoReader) run(nextSeq uint64) {
 	defer sw.wg.Done()
 
 	var err error
-	var s *Stream
+	var s StreamWrapperInterface
 	var r *Reader
 
 	disconnect := func() {

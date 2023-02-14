@@ -20,7 +20,7 @@ type StreamMetrics struct {
 	InBytes   prometheus.Gauge `json:"-"`
 	OutBytes  prometheus.Gauge `json:"-"`
 
-	s    *stream.Stream
+	s    stream.StreamWrapperInterface
 	stop chan struct{}
 	wg   sync.WaitGroup
 }
@@ -59,7 +59,7 @@ func createStreamMetrics(streamName string, server *_metrics.Server, labelNames 
 	}
 }
 
-func (sm *StreamMetrics) StartObserving(s *stream.Stream) {
+func (sm *StreamMetrics) StartObserving(s stream.StreamWrapperInterface) {
 	sm.s = s
 	sm.Connected.Set(1)
 	sm.stop = make(chan struct{})

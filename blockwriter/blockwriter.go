@@ -33,7 +33,7 @@ type Opts struct {
 
 type BlockWriter struct {
 	opts           *Opts
-	output         *stream.Stream
+	output         stream.StreamWrapperInterface
 	parseBlock     blockparse.ParseBlockFn
 	publishAckWait nats.AckWait
 
@@ -58,7 +58,7 @@ func (opts Opts) FillMissingFields() *Opts {
 	return &opts
 }
 
-func NewBlockWriter(opts *Opts, output *stream.Stream, parseBlock blockparse.ParseBlockFn) (*BlockWriter, *types.AbstractBlock, error) {
+func NewBlockWriter(opts *Opts, output stream.StreamWrapperInterface, parseBlock blockparse.ParseBlockFn) (*BlockWriter, *types.AbstractBlock, error) {
 	opts = opts.FillMissingFields()
 	bw := &BlockWriter{
 		opts:           opts,

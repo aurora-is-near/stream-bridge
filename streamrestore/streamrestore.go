@@ -18,6 +18,8 @@ import (
 	"github.com/aurora-is-near/stream-bridge/types"
 )
 
+var ConnectStream = stream.ConnectStream
+
 const stdoutInterval = time.Second * 5
 
 var errConnectionProblem = errors.New("connection problem")
@@ -26,7 +28,7 @@ var errStartNotFound = errors.New("start not found")
 
 type StreamRestore struct {
 	Mode            string
-	Chunks          *chunks.Chunks
+	Chunks          chunks.ChunksInterface
 	Stream          *stream.Opts
 	Writer          *blockwriter.Opts
 	StartSeq        uint64
@@ -87,7 +89,7 @@ func (sr *StreamRestore) push() error {
 		return errInterrupted
 	}
 
-	stream, err := stream.ConnectStream(sr.Stream)
+	stream, err := ConnectStream(sr.Stream)
 	if err != nil {
 		log.Printf("Got connection problem, will reconnect: %v", err)
 		return errConnectionProblem
