@@ -18,7 +18,7 @@ func parseNearBlock(data []byte, header nats.Header) (*types.AbstractBlock, erro
 	return block.ToAbstractBlock(), nil
 }
 
-func parseAuroraBlock(data []byte, header nats.Header) (*types.AbstractBlock, error) {
+func ParseAuroraBlock(data []byte, header nats.Header) (*types.AbstractBlock, error) {
 	block, err := types.DecodeAuroraBlock(data)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func parseUnverifiedBlock(data []byte, header nats.Header) (*types.AbstractBlock
 func GetParseBlockFn(mode string) (ParseBlockFn, error) {
 	modes := map[string]ParseBlockFn{
 		"near":       parseNearBlock,
-		"aurora":     parseAuroraBlock,
+		"aurora":     ParseAuroraBlock,
 		"unverified": parseUnverifiedBlock,
 	}
 	if fn, ok := modes[mode]; ok {
