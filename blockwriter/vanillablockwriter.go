@@ -66,7 +66,7 @@ func NewVanillaBlockWriter(opts *Opts, output stream.StreamWrapperInterface, par
 
 func (bw *VanillaBlockWriter) Write(ctx context.Context, block *types.AbstractBlock, data []byte) (*nats.PubAck, error) {
 	if block.Sequence%50000 == 0 {
-		log.Printf("VanillaBlockWriter: Write: %d", block.Height)
+		log.Printf("VanillaBlockWriter: Write: (Block Height) %d", block.Height)
 	}
 
 	msg := &nats.Msg{
