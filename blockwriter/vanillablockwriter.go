@@ -65,17 +65,15 @@ func NewVanillaBlockWriter(opts *Opts, output stream.StreamWrapperInterface, par
 }
 
 func (bw *VanillaBlockWriter) Write(ctx context.Context, block *types.AbstractBlock, data []byte) (*nats.PubAck, error) {
-	if Logging {
+	if block.Sequence%50000 == 0 {
 		log.Printf("VanillaBlockWriter: Write: %d", block.Height)
 	}
+
 	msg := &nats.Msg{
 		Subject: bw.output.GetStream().Opts.Subject,
 		Data:    data,
 	}
 	pubAck, err := bw.output.GetStream().Js.PublishMsg(msg, bw.publishAckWait)
-	if Logging {
-		log.Printf("VanillaBlockWriter: pubAck: %+v error: %e", pubAck, err)
-	}
 	return pubAck, err
 }
 
