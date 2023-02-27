@@ -19,6 +19,7 @@ import (
 )
 
 var ConnectStream = stream.ConnectStream
+var NewBlockWriter = blockwriter.NewBlockWriter
 
 const stdoutInterval = time.Second * 5
 
@@ -36,7 +37,7 @@ type StreamRestore struct {
 	ToleranceWindow uint
 	ReconnectWaitMs uint
 
-	parseBlock blockparse.ParseBlockFn
+	ParseBlock blockparse.ParseBlockFn
 	interrupt  chan os.Signal
 }
 
@@ -46,7 +47,7 @@ func (sr *StreamRestore) Run() error {
 	}
 
 	var err error
-	sr.parseBlock, err = blockparse.GetParseBlockFn(sr.Mode)
+	sr.ParseBlock, err = blockparse.GetParseBlockFn(sr.Mode)
 	if err != nil {
 		return err
 	}
@@ -99,7 +100,7 @@ func (sr *StreamRestore) push() error {
 		return errInterrupted
 	}
 
-	writer, tip, err := blockwriter.NewBlockWriter(sr.Writer, stream, sr.parseBlock)
+	writer, tip, err := NewBlockWriter(sr.Writer, stream, sr.ParseBlock)
 	if err != nil {
 		log.Printf("Got connection problem, will reconnect: %v", err)
 		return errConnectionProblem
@@ -156,12 +157,12 @@ func (sr *StreamRestore) push() error {
 				return fmt.Errorf("can't read from backup: %w", out.err)
 			}
 			bb := out.blockBackup
-			lastReadSeq = bb.sequence
-			switch ack, err := writer.Write(context.Background(), bb.block, bb.messageBackup.Data); err {
+			lastReadSeq = bb.Sequence
+			switch ack, err := writer.Write(context.Background(), bb.Block, bb.MessageBackup.Data); err {
 			case nil:
 				lastWrittenSeq = ack.Sequence
 			case blockwriter.ErrHashMismatch:
-				fmt.Printf("[WRONGHASH]: seq=%v\n", bb.sequence)
+				fmt.Printf("[WRONGHASH]: seq=%v\n", bb.Sequence)
 				lastBlockWasWrong = true
 			case blockwriter.ErrLowHeight:
 			default:
@@ -208,10 +209,10 @@ func (sr *StreamRestore) findStartChunkSeq(tip *types.AbstractBlock) (uint64, er
 		if err != nil {
 			return 0, fmt.Errorf("binsearch: can't read first message of chunk which starts on %v: %w", chunkStarts[m], err)
 		}
-		if bb.sequence != chunkStarts[m] {
-			return 0, fmt.Errorf("binsearch: bb.sequence != chunkStarts[m]")
+		if bb.Sequence != chunkStarts[m] {
+			return 0, fmt.Errorf("binsearch: bb.Sequence != chunkStarts[m]")
 		}
-		if bb.block.Height <= tipHeight {
+		if bb.Block.Height <= tipHeight {
 			l = m
 		} else {
 			r = m

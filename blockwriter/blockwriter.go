@@ -58,7 +58,13 @@ func (opts Opts) FillMissingFields() *Opts {
 	return &opts
 }
 
-func NewBlockWriter(opts *Opts, output stream.StreamWrapperInterface, parseBlock blockparse.ParseBlockFn) (*BlockWriter, *types.AbstractBlock, error) {
+type BlockWriterInterface interface {
+	Write(ctx context.Context, block *types.AbstractBlock, data []byte) (*nats.PubAck, error)
+	GetTip(ttl time.Duration) (*types.AbstractBlock, time.Time, error)
+	getTip(ttl time.Duration) (*types.AbstractBlock, time.Time, error)
+}
+
+func NewBlockWriter(opts *Opts, output stream.StreamWrapperInterface, parseBlock blockparse.ParseBlockFn) (BlockWriterInterface, *types.AbstractBlock, error) {
 	opts = opts.FillMissingFields()
 	bw := &BlockWriter{
 		opts:           opts,

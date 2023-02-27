@@ -18,10 +18,10 @@ type Opts struct {
 }
 
 type Stream struct {
-	opts        *Opts
+	Opts        *Opts
 	requestWait nats.MaxWait
 	nc          *transport.NatsConnection
-	js          nats.JetStreamContext
+	Js          nats.JetStreamContext
 
 	info     *nats.StreamInfo
 	infoErr  error
@@ -53,7 +53,7 @@ func (s *Stream) GetStream() *Stream {
 func ConnectStream(opts *Opts) (StreamWrapperInterface, error) {
 	opts = opts.FillMissingFields()
 	s := &Stream{
-		opts:        opts,
+		Opts:        opts,
 		requestWait: nats.MaxWait(time.Millisecond * time.Duration(opts.RequestWaitMs)),
 	}
 
@@ -67,7 +67,7 @@ func ConnectStream(opts *Opts) (StreamWrapperInterface, error) {
 	}
 
 	s.log("connecting to NATS JetStream...")
-	s.js, err = s.nc.Conn().JetStream(s.requestWait)
+	s.Js, err = s.nc.Conn().JetStream(s.requestWait)
 	if err != nil {
 		s.log("unable to connect to NATS JetStream: %v", err)
 		s.Disconnect()
@@ -88,7 +88,7 @@ func ConnectStream(opts *Opts) (StreamWrapperInterface, error) {
 		for curInfo.Config.Mirror != nil {
 			mirrorName := curInfo.Config.Mirror.Name
 			s.log("stream '%s' is mirrored from stream '%s', getting it's info...", curInfo.Config.Name, mirrorName)
-			curInfo, err = s.js.StreamInfo(mirrorName, s.requestWait)
+			curInfo, err = s.Js.StreamInfo(mirrorName, s.requestWait)
 			if err != nil {
 				s.log("unable to get stream '%s' info: %v", mirrorName, err)
 				s.Disconnect()
@@ -126,28 +126,28 @@ func (s *Stream) GetInfo(ttl time.Duration) (*nats.StreamInfo, time.Time, error)
 	s.infoMtx.Lock()
 	defer s.infoMtx.Unlock()
 	if ttl == 0 || time.Since(s.infoTime) > ttl {
-		s.info, s.infoErr = s.js.StreamInfo(s.opts.Stream, s.requestWait)
+		s.info, s.infoErr = s.Js.StreamInfo(s.Opts.Stream, s.requestWait)
 		s.infoTime = time.Now()
 	}
 	return s.info, s.infoTime, s.infoErr
 }
 
 func (s *Stream) Get(seq uint64) (*nats.RawStreamMsg, error) {
-	return s.js.GetMsg(s.opts.Stream, seq, s.requestWait)
+	return s.Js.GetMsg(s.Opts.Stream, seq, s.requestWait)
 }
 
 func (s *Stream) Write(data []byte, header nats.Header, publishAckWait nats.AckWait) (*nats.PubAck, error) {
-	header.Add(nats.ExpectedStreamHdr, s.opts.Stream)
+	header.Add(nats.ExpectedStreamHdr, s.Opts.Stream)
 	msg := &nats.Msg{
-		Subject: s.opts.Subject,
+		Subject: s.Opts.Subject,
 		Header:  header,
 		Data:    data,
 	}
-	return s.js.PublishMsg(msg, publishAckWait)
+	return s.Js.PublishMsg(msg, publishAckWait)
 }
 
 func (s *Stream) log(format string, v ...any) {
-	log.Printf(fmt.Sprintf("Stream [%s / %s]: ", s.opts.Nats.LogTag, s.opts.Stream)+format, v...)
+	log.Printf(fmt.Sprintf("Stream [%s / %s]: ", s.Opts.Nats.LogTag, s.Opts.Stream)+format, v...)
 }
 
 func (s *Stream) Stats() *nats.Statistics {

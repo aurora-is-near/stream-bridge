@@ -21,7 +21,7 @@ var errInterrupted = errors.New("interrupted")
 
 type StreamBackup struct {
 	Mode     string
-	Chunks   *chunks.Chunks
+	Chunks   chunks.ChunksInterface
 	Reader   *stream.AutoReader
 	StartSeq uint64
 	EndSeq   uint64

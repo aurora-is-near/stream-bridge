@@ -11,14 +11,14 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-type blockBackup struct {
-	sequence      uint64
-	messageBackup *messagebackup.MessageBackup
-	block         *types.AbstractBlock
+type BlockBackup struct {
+	Sequence      uint64
+	MessageBackup *messagebackup.MessageBackup
+	Block         *types.AbstractBlock
 }
 
 type readingResult struct {
-	blockBackup *blockBackup
+	blockBackup *BlockBackup
 	err         error
 }
 
@@ -61,7 +61,7 @@ func (sr *StreamRestore) startReading(seq uint64) (output <-chan *readingResult,
 
 			bb, err := sr.parseBlockBackup(seq, data)
 			if err != nil {
-				out <- &readingResult{err: fmt.Errorf("can't parse block backup on seq %v: %w", seq, err)}
+				out <- &readingResult{err: fmt.Errorf("can't parse Block backup on seq %v: %w", seq, err)}
 				return
 			}
 
@@ -79,7 +79,7 @@ func (sr *StreamRestore) startReading(seq uint64) (output <-chan *readingResult,
 	}
 }
 
-func (sr *StreamRestore) readSingle(pos uint64) (*blockBackup, error) {
+func (sr *StreamRestore) readSingle(pos uint64) (*BlockBackup, error) {
 	if err := sr.Chunks.SeekReader(pos); err != nil {
 		return nil, fmt.Errorf("can't seek reader to pos %v: %w", pos, err)
 	}
@@ -89,27 +89,27 @@ func (sr *StreamRestore) readSingle(pos uint64) (*blockBackup, error) {
 	}
 	bb, err := sr.parseBlockBackup(seq, data)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse block backup (seq=%v): %w", seq, err)
+		return nil, fmt.Errorf("can't parse Block backup (seq=%v): %w", seq, err)
 	}
 	return bb, nil
 }
 
-func (sr *StreamRestore) parseBlockBackup(sequence uint64, data []byte) (*blockBackup, error) {
-	bb := &blockBackup{
-		sequence:      sequence,
-		messageBackup: &messagebackup.MessageBackup{},
+func (sr *StreamRestore) parseBlockBackup(sequence uint64, data []byte) (*BlockBackup, error) {
+	bb := &BlockBackup{
+		Sequence:      sequence,
+		MessageBackup: &messagebackup.MessageBackup{},
 	}
-	err := bb.messageBackup.UnmarshalVT(data)
+	err := bb.MessageBackup.UnmarshalVT(data)
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal message backup (seq=%v): %w", sequence, err)
 	}
 	headers := make(nats.Header)
-	for key, values := range bb.messageBackup.Headers {
+	for key, values := range bb.MessageBackup.Headers {
 		headers[key] = values.Values
 	}
-	bb.block, err = sr.parseBlock(bb.messageBackup.Data, headers)
+	bb.Block, err = sr.ParseBlock(bb.MessageBackup.Data, headers)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse block from message backup (seq=%v): %w", sequence, err)
+		return nil, fmt.Errorf("can't parse Block from message backup (seq=%v): %w", sequence, err)
 	}
 	return bb, nil
 }

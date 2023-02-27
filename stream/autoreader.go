@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var ConnectMockStream = ConnectStream
+
 type AutoReader struct {
 	Stream          *Opts
 	Reader          *ReaderOpts
@@ -74,7 +76,7 @@ func (sw *AutoReader) run(nextSeq uint64) {
 
 		if s == nil || r == nil {
 			disconnect()
-			s, err = ConnectStream(sw.Stream)
+			s, err = ConnectMockStream(sw.Stream)
 			if err != nil {
 				log.Printf("Can't connect stream: %v", err)
 				connectionProblem = true
