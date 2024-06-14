@@ -1,5 +1,4 @@
 FROM golang:1.18-alpine AS build
-ARG APP
 ENV GOPRIVATE=github.com/aurora-is-near/*
 ENV CGO_ENABLED=0
 
@@ -13,6 +12,7 @@ COPY go.mod go.sum ./
 RUN go mod download -x
 
 COPY . .
+ARG APP
 RUN go build -o /$APP cmd/$APP/*.go
 
 FROM alpine:latest
