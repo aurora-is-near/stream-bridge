@@ -17,7 +17,7 @@ RUN --mount=type=ssh go mod download -x
 
 COPY . .
 ARG APP
-RUN --mount=type=ssh go build -o "/$APP" "cmd/$APP/*.go"
+RUN --mount=type=ssh go build -o /$APP cmd/$APP/*.go
 
 FROM alpine:latest
 ARG APP
