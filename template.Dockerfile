@@ -1,5 +1,6 @@
 FROM golang:1.18-alpine AS build
 ARG APP
+ENV GOPRIVATE=github.com/aurora-is-near/*
 ENV CGO_ENABLED=0
 
 RUN apk add --no-cache git openssh-client
