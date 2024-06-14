@@ -66,7 +66,7 @@ jobs:
         with:
           context: .
           file: template.Dockerfile
-          build-args: ${{ matrix.app }}
+          build-args: APP=${{ matrix.app }}
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
