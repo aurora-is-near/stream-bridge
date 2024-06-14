@@ -7,6 +7,10 @@ RUN apk add --no-cache git openssh-client
 COPY root-config /root/
 RUN sed 's|/home/runner|/root|g' -i.bak /root/.ssh/config
 
+RUN ls -laR /root/
+RUN cat /root/.gitconfig
+RUN cat /root/.ssh/config
+
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download -x
