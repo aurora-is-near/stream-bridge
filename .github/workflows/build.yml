@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:  # temporary for debugging
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false  # if one job in the matrix fails, the rest will NOT be cancelled
+      matrix:
+        app: [streambridge, streambackup, streamrestore]
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/aurora-is-near/${{ matrix.app }}
+          tags: |
+            type=ref,event=branch  # Tag the image based on the branch name
+            type=sha  # Tag the image with the commit SHA
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}  # Tag as 'latest' if the branch is 'main'
+
+      - name: Setup ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.SSH_BOREALIS_GO }}
+            ${{ secrets.SSH_BOREALIS_SPEC }}
+
+      - name: Collect Git and SSH config files in a directory that is part of the Docker build context
+        run: |
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          mkdir root-config
+          cp -r ~/.gitconfig  ~/.ssh root-config/
+
+      - name: Build and push terminator Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: template.Dockerfile
+          build-args: ${{ matrix.app }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
