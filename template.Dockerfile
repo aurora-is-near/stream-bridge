@@ -13,11 +13,11 @@ RUN cat /root/.ssh/config
 
 WORKDIR /src
 COPY go.mod go.sum ./
-RUN go mod download -x
+RUN --mount=type=ssh go mod download -x
 
 COPY . .
 ARG APP
-RUN go build -o /$APP cmd/$APP/*.go
+RUN --mount=type=ssh go build -o /$APP cmd/$APP/*.go
 
 FROM alpine:latest
 ARG APP
