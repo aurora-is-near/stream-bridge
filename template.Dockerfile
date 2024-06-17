@@ -13,12 +13,11 @@ RUN --mount=type=ssh go mod download -x
 
 COPY . .
 ARG APP
-RUN --mount=type=ssh go build -o /$APP cmd/$APP/*.go
+RUN --mount=type=ssh go build -o /app cmd/$APP/*.go
 
 FROM alpine:latest
-ARG APP
-COPY --from=build /$APP /usr/local/bin/$APP
+COPY --from=build /app /usr/local/bin/app
 RUN addgroup -S aurora && adduser --disabled-password --no-create-home -S aurora -G aurora
 USER aurora
 
-ENTRYPOINT [ "/usr/local/bin/$APP" ]
+ENTRYPOINT [ "/usr/local/bin/app" ]
