@@ -6,12 +6,14 @@ import (
 )
 
 func CtxSleep(ctx context.Context, d time.Duration) bool {
-	timer := time.NewTimer(d)
+	t := time.NewTimer(d)
 	select {
 	case <-ctx.Done():
-		timer.Stop()
+		if !t.Stop() {
+			<-t.C
+		}
 		return false
-	case <-timer.C:
+	case <-t.C:
 		return true
 	}
 }
