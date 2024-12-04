@@ -1,6 +1,6 @@
 module github.com/aurora-is-near/stream-bridge
 
-go 1.18
+go 1.23
 
 require (
 	github.com/aurora-is-near/aurora-relayer-sqlblock v0.1.3

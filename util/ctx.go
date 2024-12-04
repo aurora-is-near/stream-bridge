@@ -10,7 +10,10 @@ func CtxSleep(ctx context.Context, d time.Duration) bool {
 	select {
 	case <-ctx.Done():
 		if !t.Stop() {
-			<-t.C
+			select {
+			case <-t.C:
+			default:
+			}
 		}
 		return false
 	case <-t.C:
