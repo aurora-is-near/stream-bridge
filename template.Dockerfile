@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS build
+FROM golang:1.23-alpine AS build
 ENV GOPRIVATE=github.com/aurora-is-near/*
 ENV CGO_ENABLED=0
 
