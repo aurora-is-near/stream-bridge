@@ -1,0 +1,1415 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "id": 119,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "continuous-GrYlRd"
+                    },
+                    "custom": {
+                        "fillOpacity": 70,
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineWidth": 0,
+                        "spanNulls": false
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "color": "red",
+                                    "index": 1,
+                                    "text": "No"
+                                },
+                                "1": {
+                                    "color": "green",
+                                    "index": 0,
+                                    "text": "Yes"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "unit": "bool_yes_no"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 4,
+            "maxDataPoints": 500,
+            "options": {
+                "alignValue": "left",
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "never",
+                "tooltip": {
+                    "maxHeight": 600,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "instant": false,
+                    "legendFormat": "{{service}}",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Input connection",
+            "type": "state-timeline"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "continuous-GrYlRd"
+                    },
+                    "custom": {
+                        "fillOpacity": 70,
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineWidth": 0,
+                        "spanNulls": false
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "color": "red",
+                                    "index": 1,
+                                    "text": "No"
+                                },
+                                "1": {
+                                    "color": "green",
+                                    "index": 0,
+                                    "text": "Yes"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "unit": "bool_yes_no"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 24,
+                "x": 0,
+                "y": 5
+            },
+            "id": 10,
+            "maxDataPoints": 500,
+            "options": {
+                "alignValue": "left",
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "never",
+                "tooltip": {
+                    "maxHeight": 600,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "instant": false,
+                    "legendFormat": "{{service}}",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Output connection",
+            "type": "state-timeline"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 3,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 10
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "maxHeight": 600,
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_reader_height{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "instant": false,
+                    "legendFormat": "Reader ({{service}})",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_writer_tip_height{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Output tip ({{service}})",
+                    "range": true,
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_last_written_height{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Last written ({{service}})",
+                    "range": true,
+                    "refId": "C"
+                }
+            ],
+            "title": "Height",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 1,
+                        "pointSize": 3,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 18
+            },
+            "id": 3,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "maxHeight": 600,
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_input_first_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 1",
+                    "instant": false,
+                    "legendFormat": "First ({{service}})",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "expr": "infra_stream_bridge_input_last_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 0",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "Last ({{service}})",
+                    "range": true,
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "expr": "infra_stream_bridge_input_start_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 0",
+                    "hide": false,
+                    "legendFormat": "Start ({{service}})",
+                    "range": true,
+                    "refId": "C"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "expr": "infra_stream_bridge_input_end_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 0",
+                    "hide": false,
+                    "legendFormat": "End ({{service}})",
+                    "range": true,
+                    "refId": "D"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "expr": "infra_stream_bridge_reader_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 0",
+                    "hide": false,
+                    "legendFormat": "Reader ({{service}})",
+                    "range": true,
+                    "refId": "E"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "expr": "infra_stream_bridge_writer_last_written_input_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 0",
+                    "hide": false,
+                    "legendFormat": "Last written ({{service}})",
+                    "range": true,
+                    "refId": "F"
+                }
+            ],
+            "title": "Input seq",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 1,
+                        "pointSize": 3,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 26
+            },
+            "id": 9,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_output_first_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 1",
+                    "instant": false,
+                    "legendFormat": "First ({{service}})",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "expr": "infra_stream_bridge_output_last_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 0",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "Last ({{service}})",
+                    "range": true,
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "expr": "infra_stream_bridge_writer_last_written_output_seq{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"} > 0",
+                    "hide": false,
+                    "legendFormat": "Last written ({{service}})",
+                    "range": true,
+                    "refId": "C"
+                }
+            ],
+            "title": "Output seq",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 1,
+                        "pointSize": 3,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "cps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 34
+            },
+            "id": 6,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "disableTextWrap": false,
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_reads_count{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "fullMetaSearch": false,
+                    "includeNullMetadata": true,
+                    "instant": false,
+                    "legendFormat": "Reads ({{service}})",
+                    "range": true,
+                    "refId": "A",
+                    "useBackend": false
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_writes_count{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Writes ({{service}})",
+                    "range": true,
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_low_seq_skips_count{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Low seq skips ({{service}})",
+                    "range": true,
+                    "refId": "C"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_corrupted_block_skips{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Corrupted block skips ({{service}})",
+                    "range": true,
+                    "refId": "D"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_low_height_skips_count{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Low height skips ({{service}})",
+                    "range": true,
+                    "refId": "E"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "builder",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_hash_mismatch_skips_count{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Hash mismatch skips ({{service}})",
+                    "range": true,
+                    "refId": "F"
+                }
+            ],
+            "title": "Rates",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 1,
+                        "pointSize": 3,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "cps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 42
+            },
+            "id": 11,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_consecutive_wrong_blocks{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "instant": false,
+                    "legendFormat": "Consecutive wrong blocks ({{service}})",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "rate(infra_stream_bridge_tolerance_window{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m])",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Tolerance window ({{service}})",
+                    "range": true,
+                    "refId": "B"
+                }
+            ],
+            "title": "Wrong blocks / tolerance",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 1,
+                        "pointSize": 3,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "binBps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 50
+            },
+            "id": 12,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "clamp_min(deriv(infra_stream_bridge_input_in_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m]), 0)",
+                    "instant": false,
+                    "legendFormat": "Input-in ({{service}})",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "clamp_min(deriv(infra_stream_bridge_input_out_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m]), 0)",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Input-out ({{service}})",
+                    "range": true,
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "clamp_min(deriv(infra_stream_bridge_output_in_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m]), 0)",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Output-in ({{service}})",
+                    "range": true,
+                    "refId": "C"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "clamp_min(deriv(infra_stream_bridge_output_out_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}[2m]), 0)",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Output-out ({{service}})",
+                    "range": true,
+                    "refId": "D"
+                }
+            ],
+            "title": "NATS bandwidth",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "AVozZpfnk"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 1,
+                        "pointSize": 3,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "bytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 58
+            },
+            "id": 13,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_input_in_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "instant": false,
+                    "legendFormat": "Input-in ({{service}})",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_input_out_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Input-out ({{service}})",
+                    "range": true,
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_output_in_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Output-in ({{service}})",
+                    "range": true,
+                    "refId": "C"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "AVozZpfnk"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "infra_stream_bridge_output_out_bytes{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\", output_stream=~\"$outputstream\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Output-out ({{service}})",
+                    "range": true,
+                    "refId": "D"
+                }
+            ],
+            "title": "NATS bandwidth (cumulative)",
+            "type": "timeseries"
+        }
+    ],
+    "refresh": "30s",
+    "schemaVersion": 39,
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "near_mainnet_v2"
+                    ],
+                    "value": [
+                        "near_mainnet_v2"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "AVozZpfnk"
+                },
+                "definition": "label_values(infra_stream_bridge_input_connected,stream_content)",
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "name": "content",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(infra_stream_bridge_input_connected,stream_content)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "AVozZpfnk"
+                },
+                "definition": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\"},instance)",
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "name": "instance",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\"},instance)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "AVozZpfnk"
+                },
+                "definition": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\"},service)",
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "name": "service",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\"},service)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "AVozZpfnk"
+                },
+                "definition": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\"},inputcluster)",
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "name": "inputcluster",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\"},inputcluster)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "AVozZpfnk"
+                },
+                "definition": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\"},input_stream)",
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "name": "inputstream",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\"},input_stream)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "AVozZpfnk"
+                },
+                "definition": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\"},outputcluster)",
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "name": "outputcluster",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\"},outputcluster)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "AVozZpfnk"
+                },
+                "definition": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\"},output_stream)",
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "name": "outputstream",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(infra_stream_bridge_input_connected{stream_content=~\"$content\", instance=~\"$instance\", service=~\"$service\", inputcluster=~\"$inputcluster\", input_stream=~\"$inputstream\", outputcluster=~\"$outputcluster\"},output_stream)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 2,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-2h",
+        "to": "now"
+    },
+    "timeRangeUpdatedDuringEditOrView": false,
+    "timepicker": {},
+    "timezone": "utc",
+    "title": "Stream Bridge V3",
+    "uid": "c86e47c2-1a77-4bf8-af7b-10586b6426d6",
+    "version": 12,
+    "weekStart": ""
+}
