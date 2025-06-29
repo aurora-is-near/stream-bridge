@@ -4,9 +4,19 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/aurora-is-near/borealis.go"
 	"github.com/fxamacker/cbor/v2"
 )
+
+type BorealisUniqueID = [16]byte
+
+type BorealisEnvelope struct {
+	_            struct{} `json:"-" cbor:",toarray"`
+	Type         uint16
+	SequentialID uint64
+	TimestampS   uint32
+	TimestampMS  uint16
+	UniqueID     BorealisUniqueID
+}
 
 var cborDecMode cbor.DecMode
 
@@ -36,13 +46,13 @@ func DecodeBorealisPayload[T any](data []byte) (*T, error) {
 	}
 
 	switch version {
-	case borealis.V1MessageVersion:
+	case 1:
 		decMode, err := getCborDecMode()
 		if err != nil {
 			return nil, err
 		}
 		decoder := decMode.NewDecoder(reader)
-		envelope := &borealis.Envelope{}
+		envelope := &BorealisEnvelope{}
 		if err := decoder.Decode(envelope); err != nil {
 			return nil, err
 		}
