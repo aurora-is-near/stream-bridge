@@ -73,3 +73,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           ssh: default=${{ env.SSH_AUTH_SOCK }}
+
+  deploy-betanet:
+    needs: build-and-push-image
+    runs-on: runs-on=${{ github.run_id }}/family=t3.medium/image=ubuntu24-full-x64
+    steps:
+      - name: Trigger betanet deployment
+        run: |
+          gh workflow run cd-stream-bridge-betanet.yaml \
+            -R aurora-is-near/kubeops \
+            -f "tag=sha-${GITHUB_SHA::7}"
+        env:
+          GH_TOKEN: ${{ secrets.KUBEOPS_GHA_WORKFLOWS_TOKEN }}
